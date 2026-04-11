@@ -1,0 +1,226 @@
+# ============================================================================
+# BLUEPRINT 2 : Nettoyage complet si pas passé depuis X jours
+# ============================================================================
+# Fichier à placer dans :
+#   config/blueprints/automation/roborock/vacuum_deep_clean.yaml
+#
+# Fonctionnement :
+#   - Vérifie à une heure configurable si le dernier nettoyage
+#     date de plus de X jours (via un helper input_datetime)
+#   - Si oui ET que personne n'est à la maison → lance le nettoyage
+#   - Peut activer le mode lavage avant le nettoyage
+#   - Met à jour automatiquement le tracker de dernier nettoyage
+# ============================================================================
+
+blueprint:
+  name: "Roborock - Nettoyage complet si trop longtemps sans passage"
+  description: >
+    Lance un nettoyage complet (aspiration + lavage optionnel) si
+    l'aspirateur n'est pas passé depuis un nombre de jours configurable.
+    Ne se déclenche que si personne n'est à la maison.
+  domain: automation
+
+  input:
+    # -- Section Aspirateur --
+    aspirateur:
+      name: Aspirateur
+      collapsed: false
+      input:
+        vacuum_entity:
+          name: Aspirateur Roborock
+          selector:
+            entity:
+              filter:
+                - domain: vacuum
+
+        room_ids:
+          name: IDs des pièces à nettoyer
+          description: >
+            Liste des IDs séparés par des virgules (ex: 9,8,5,7,1).
+          default: "9,8,5,7,1"
+          selector:
+            text:
+
+        repeat_count:
+          name: Nombre de passages
+          default: 1
+          selector:
+            number:
+              min: 1
+              max: 3
+              mode: slider
+
+    # -- Section Planification --
+    planification:
+      name: Planification
+      collapsed: false
+      input:
+        check_time:
+          name: Heure de vérification
+          description: À quelle heure vérifier chaque jour.
+          default: "10:00:00"
+          selector:
+            time:
+
+        days_threshold:
+          name: Nombre de jours sans nettoyage
+          description: >
+            Lance le nettoyage si le dernier passage remonte à plus
+            de ce nombre de jours.
+          default: 2
+          selector:
+            number:
+              min: 1
+              max: 14
+              unit_of_measurement: jours
+              mode: slider
+
+        last_clean_tracker:
+          name: Tracker du dernier nettoyage
+          description: >
+            Un helper **input_datetime** (date + heure) qui enregistre
+            la date du dernier nettoyage.
+
+            **Pour le créer** : Paramètres > Appareils > Entrées >
+            Créer une entrée > Date et/ou heure (cocher date ET heure).
+          selector:
+            entity:
+              filter:
+                - domain: input_datetime
+
+    # -- Section Présence --
+    presence:
+      name: Présence
+      collapsed: false
+      input:
+        alarm_entity:
+          name: Panneau d'alarme (Alarmo)
+          selector:
+            entity:
+              filter:
+                - domain: alarm_control_panel
+
+    # -- Section Lavage (optionnel) --
+    lavage:
+      name: Lavage (optionnel)
+      collapsed: true
+      input:
+        enable_mop:
+          name: Activer le lavage
+          description: >
+            Active le mode lavage avant de lancer le nettoyage.
+            Nécessite que ton Roborock supporte le lavage et que
+            l'entité de mode lavage soit disponible.
+          default: false
+          selector:
+            boolean:
+
+        mop_mode_entity:
+          name: Entité mode lavage
+          description: >
+            L'entité select qui contrôle le mode lavage de ton Roborock
+            (ex: select.roborock_qv_35a_mop_mode). Laisse vide si tu
+            n'actives pas le lavage.
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain: select
+
+        mop_mode_value:
+          name: Valeur du mode lavage
+          description: >
+            La valeur à sélectionner pour le mode lavage
+            (ex: "standard", "deep", "custom"). Vérifie les options
+            disponibles dans l'entité select de ton Roborock.
+          default: "standard"
+          selector:
+            text:
+
+    # -- Section Notifications --
+    notifications:
+      name: Notifications
+      collapsed: true
+      input:
+        notify_service:
+          name: Service de notification
+          default: notify.notify
+          selector:
+            text:
+
+mode: single
+
+variables:
+  room_ids_str: !input room_ids
+  room_ids_list: "{{ room_ids_str.split(',') | map('trim') | map('int') | list }}"
+  days: !input days_threshold
+  threshold_seconds: "{{ days * 86400 }}"
+  tracker: !input last_clean_tracker
+  do_mop: !input enable_mop
+  mop_entity: !input mop_mode_entity
+  mop_value: !input mop_mode_value
+  notification_service: !input notify_service
+
+triggers:
+  - trigger: time
+    at: !input check_time
+
+conditions:
+  # Personne à la maison
+  - condition: state
+    entity_id: !input alarm_entity
+    state: "armed_away"
+
+  # Aspirateur à la base
+  - condition: state
+    entity_id: !input vacuum_entity
+    state: "docked"
+
+  # Dernier nettoyage > X jours
+  - condition: template
+    value_template: >
+      {% set dernier = states(tracker) %}
+      {% if dernier not in ['unknown', 'unavailable', 'None', ''] %}
+        {{ (now() - strptime(dernier, '%Y-%m-%d %H:%M:%S')).total_seconds() > threshold_seconds }}
+      {% else %}
+        true
+      {% endif %}
+
+actions:
+  # Active le lavage si demandé
+  - if:
+      - condition: template
+        value_template: "{{ do_mop and mop_entity != '' }}"
+    then:
+      - action: select.select_option
+        target:
+          entity_id: !input mop_mode_entity
+        data:
+          option: "{{ mop_value }}"
+      - delay:
+          seconds: 2
+
+  # Lance le nettoyage
+  - action: vacuum.send_command
+    target:
+      entity_id: !input vacuum_entity
+    data:
+      command: app_segment_clean
+      params:
+        - segments: "{{ room_ids_list }}"
+          repeat: !input repeat_count
+
+  # Met à jour le tracker
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: !input last_clean_tracker
+    data:
+      datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+  # Notification
+  - action: "{{ notification_service }}"
+    data:
+      title: "Aspirateur"
+      message: >
+        Nettoyage {{ 'complet (aspiro + lavage)' if do_mop else 'automatique' }}
+        lancé — dernier passage il y a plus de {{ days }} jours.

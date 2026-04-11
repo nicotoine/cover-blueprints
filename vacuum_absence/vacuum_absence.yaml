@@ -1,0 +1,164 @@
+# ============================================================================
+# BLUEPRINT 1 : Aspirateur automatique en absence
+# ============================================================================
+# Fichier à placer dans :
+#   config/blueprints/automation/roborock/vacuum_absence.yaml
+#
+# Fonctionnement :
+#   - Se déclenche quand l'alarme passe en "armé absent"
+#   - Attend un délai configurable puis lance l'aspirateur
+#   - Si quelqu'un rentre (alarme désarmée), l'aspirateur retourne à la base
+#   - Envoie une notification au retour si l'aspirateur tournait
+# ============================================================================
+
+blueprint:
+  name: "Roborock - Aspirer automatiquement en absence"
+  description: >
+    Lance l'aspirateur Roborock dans les pièces sélectionnées quand
+    l'alarme est armée en mode absent. L'aspirateur retourne à sa base
+    automatiquement si quelqu'un rentre à la maison.
+  domain: automation
+
+  input:
+    # -- Section Aspirateur --
+    aspirateur:
+      name: Aspirateur
+      collapsed: false
+      input:
+        vacuum_entity:
+          name: Aspirateur Roborock
+          description: Sélectionne ton aspirateur Roborock.
+          selector:
+            entity:
+              filter:
+                - domain: vacuum
+
+        room_ids:
+          name: IDs des pièces à nettoyer
+          description: >
+            Liste des IDs de pièces séparés par des virgules (ex: 9,8,5,7,1).
+            Pour trouver les IDs : Outils de développement > Actions >
+            roborock.get_maps > sélectionne ton aspirateur.
+          default: "9,8,5,7,1"
+          selector:
+            text:
+
+        repeat_count:
+          name: Nombre de passages
+          description: Combien de fois l'aspirateur passe dans chaque pièce.
+          default: 1
+          selector:
+            number:
+              min: 1
+              max: 3
+              mode: slider
+
+    # -- Section Alarme & Présence --
+    presence:
+      name: Présence
+      collapsed: false
+      input:
+        alarm_entity:
+          name: Panneau d'alarme (Alarmo)
+          description: L'entité de ton système d'alarme.
+          selector:
+            entity:
+              filter:
+                - domain: alarm_control_panel
+
+        departure_delay:
+          name: Délai après départ (minutes)
+          description: >
+            Temps d'attente après l'armement de l'alarme avant de
+            lancer l'aspirateur (évite les faux départs).
+          default: 5
+          selector:
+            number:
+              min: 0
+              max: 30
+              unit_of_measurement: minutes
+
+    # -- Section Notifications --
+    notifications:
+      name: Notifications
+      collapsed: true
+      input:
+        notify_on_return:
+          name: Notifier au retour
+          description: Envoyer une notification si l'aspirateur est renvoyé à la base.
+          default: true
+          selector:
+            boolean:
+
+        notify_service:
+          name: Service de notification
+          description: >
+            Le service de notification à utiliser (ex: notify.mobile_app_mon_telephone).
+            Laisse "notify.notify" par défaut pour notifier tout le monde.
+          default: notify.notify
+          selector:
+            text:
+
+mode: restart
+max_exceeded: silent
+
+variables:
+  room_ids_str: !input room_ids
+  room_ids_list: "{{ room_ids_str.split(',') | map('trim') | map('int') | list }}"
+  do_notify: !input notify_on_return
+  notification_service: !input notify_service
+
+triggers:
+  # Déclencheur 1 : Alarme armée → lancer le nettoyage
+  - trigger: state
+    entity_id: !input alarm_entity
+    to: "armed_away"
+    for:
+      minutes: !input departure_delay
+    id: "absence_detected"
+
+  # Déclencheur 2 : Alarme désarmée → arrêter le nettoyage
+  - trigger: state
+    entity_id: !input alarm_entity
+    to: "disarmed"
+    id: "return_detected"
+
+actions:
+  - choose:
+      # --- Cas 1 : Tout le monde est parti → on lance l'aspirateur ---
+      - conditions:
+          - condition: trigger
+            id: "absence_detected"
+          - condition: state
+            entity_id: !input vacuum_entity
+            state: "docked"
+        sequence:
+          - action: vacuum.send_command
+            target:
+              entity_id: !input vacuum_entity
+            data:
+              command: app_segment_clean
+              params:
+                - segments: "{{ room_ids_list }}"
+                  repeat: !input repeat_count
+
+      # --- Cas 2 : Quelqu'un rentre → on arrête l'aspirateur ---
+      - conditions:
+          - condition: trigger
+            id: "return_detected"
+          - condition: state
+            entity_id: !input vacuum_entity
+            state: "cleaning"
+        sequence:
+          - action: vacuum.return_to_base
+            target:
+              entity_id: !input vacuum_entity
+          - if:
+              - condition: template
+                value_template: "{{ do_notify }}"
+            then:
+              - action: "{{ notification_service }}"
+                data:
+                  title: "Aspirateur"
+                  message: >
+                    Quelqu'un est rentré, l'aspirateur retourne à sa base.
