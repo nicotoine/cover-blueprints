@@ -123,9 +123,7 @@ blueprint:
             n'actives pas le lavage.
           default: ""
           selector:
-            entity:
-              filter:
-                - domain: select
+            text:
 
         mop_mode_value:
           name: Valeur du mode lavage
@@ -194,7 +192,7 @@ actions:
     then:
       - action: select.select_option
         target:
-          entity_id: !input mop_mode_entity
+          entity_id: "{{ mop_entity }}"
         data:
           option: "{{ mop_value }}"
       - delay:
