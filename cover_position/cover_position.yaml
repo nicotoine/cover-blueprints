@@ -1,0 +1,180 @@
+# ============================================================================
+# BLUEPRINT : Position estimee de volet par le temps
+# ============================================================================
+# Fonctionnement :
+#   - Calcule la position du volet en % base sur le temps de course
+#   - Met a jour un input_number a chaque mouvement (depuis HA)
+#   - Recalibrage automatique en mode nuit (Alarmo) : ferme et remet a 0%
+#   - Bouton de synchro manuelle pour forcer un recalibrage
+#
+# Prerequis :
+#   - Un input_number par volet (min: 0, max: 100, pas: 1)
+#   - Un input_button (peut etre partage entre volets ou dedie)
+# ============================================================================
+
+blueprint:
+  name: "Volet - Position estimee par le temps"
+  description: >
+    Estime la position d'un volet sans retour de position en se basant
+    sur le temps de course complet. Recalibrage automatique chaque nuit
+    via Alarmo et bouton de synchro manuel.
+    0% = ferme, 100% = ouvert.
+  domain: automation
+
+  input:
+    volet:
+      name: Volet
+      collapsed: false
+      input:
+        cover_entity:
+          name: Volet
+          description: L'entite cover du volet.
+          selector:
+            entity:
+              filter:
+                - domain: cover
+
+        travel_time:
+          name: Temps de course complet (secondes)
+          description: >
+            Duree pour une ouverture ou fermeture complete.
+            Verifie dans l'entite number.xxx_time_control de ton volet.
+          default: 70
+          selector:
+            number:
+              min: 10
+              max: 300
+              unit_of_measurement: secondes
+
+        position_helper:
+          name: Position estimee (input_number)
+          description: >
+            Un helper input_number (min: 0, max: 100, pas: 1) pour
+            stocker la position estimee. 0 = ferme, 100 = ouvert.
+            Cree-en un par volet.
+          selector:
+            entity:
+              filter:
+                - domain: input_number
+
+    synchro:
+      name: Synchronisation
+      collapsed: false
+      input:
+        alarm_entity:
+          name: Panneau d'alarme (Alarmo)
+          description: Recalibrage automatique au passage en mode nuit.
+          selector:
+            entity:
+              filter:
+                - domain: alarm_control_panel
+
+        sync_button:
+          name: Bouton de synchronisation (input_button)
+          description: >
+            Un helper input_button pour forcer un recalibrage.
+            Ferme le volet completement et remet la position a 0%.
+          selector:
+            entity:
+              filter:
+                - domain: input_button
+
+mode: queued
+max: 5
+
+variables:
+  cover_id: !input cover_entity
+  position_helper: !input position_helper
+  travel_time: !input travel_time
+
+triggers:
+  # Le volet commence a s'ouvrir (commande depuis HA)
+  - trigger: state
+    entity_id: !input cover_entity
+    to: "opening"
+    id: "opening"
+
+  # Le volet commence a se fermer (commande depuis HA)
+  - trigger: state
+    entity_id: !input cover_entity
+    to: "closing"
+    id: "closing"
+
+  # Alarmo passe en mode nuit -> recalibrage
+  - trigger: state
+    entity_id: !input alarm_entity
+    to: "armed_night"
+    id: "night_recalib"
+
+  # Bouton de synchro appuye -> recalibrage
+  - trigger: state
+    entity_id: !input sync_button
+    id: "manual_recalib"
+
+actions:
+  - choose:
+      # --- Volet en ouverture -> calculer la nouvelle position ---
+      - conditions:
+          - condition: trigger
+            id: "opening"
+        sequence:
+          - variables:
+              start_position: "{{ states(position_helper) | float(0) }}"
+              start_time: "{{ as_timestamp(now()) }}"
+              remaining_time: "{{ [2, ((100 - start_position) / 100 * travel_time) | int + 2] | max }}"
+          - wait_for_trigger:
+              - trigger: template
+                value_template: "{{ not is_state(cover_id, 'opening') }}"
+            timeout:
+              seconds: "{{ remaining_time }}"
+          - variables:
+              elapsed: "{{ [as_timestamp(now()) - start_time, travel_time] | min }}"
+              new_position: "{{ [100, (start_position + (elapsed / travel_time * 100))] | min }}"
+          - action: input_number.set_value
+            target:
+              entity_id: !input position_helper
+            data:
+              value: "{{ new_position | round(0) }}"
+
+      # --- Volet en fermeture -> calculer la nouvelle position ---
+      - conditions:
+          - condition: trigger
+            id: "closing"
+        sequence:
+          - variables:
+              start_position: "{{ states(position_helper) | float(100) }}"
+              start_time: "{{ as_timestamp(now()) }}"
+              remaining_time: "{{ [2, (start_position / 100 * travel_time) | int + 2] | max }}"
+          - wait_for_trigger:
+              - trigger: template
+                value_template: "{{ not is_state(cover_id, 'closing') }}"
+            timeout:
+              seconds: "{{ remaining_time }}"
+          - variables:
+              elapsed: "{{ [as_timestamp(now()) - start_time, travel_time] | min }}"
+              new_position: "{{ [0, (start_position - (elapsed / travel_time * 100))] | max }}"
+          - action: input_number.set_value
+            target:
+              entity_id: !input position_helper
+            data:
+              value: "{{ new_position | round(0) }}"
+
+      # --- Recalibrage (nuit ou manuel) -> fermer et remettre a 0% ---
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: "night_recalib"
+              - condition: trigger
+                id: "manual_recalib"
+        sequence:
+          - action: cover.close_cover
+            target:
+              entity_id: !input cover_entity
+          - delay:
+              seconds: "{{ travel_time | int + 5 }}"
+          - action: input_number.set_value
+            target:
+              entity_id: !input position_helper
+            data:
+              value: 0
