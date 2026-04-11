@@ -1,28 +1,25 @@
 # ============================================================================
 # BLUEPRINT : Controle de volet par position estimee
 # ============================================================================
-# Fonctionnement :
-#   - Controle le volet via un slider de position cible (0-100%)
-#   - Detecte aussi les boutons ouvrir/fermer et commandes vocales
-#   - Met a jour la position en temps reel (chaque seconde)
-#   - Gere les appels consecutifs via mode restart
-#   - Arret du suivi si le volet est stoppe manuellement
-#   - Recalibrage automatique en mode nuit (Alarmo)
-#   - Bouton de synchro manuelle
+# Fonctionne avec un template cover qui route toutes les commandes
+# (boutons, voix, slider, set_position) vers la cible.
+# Le blueprint gere le mouvement et la mise a jour en temps reel.
+#
+# Voir README pour la configuration du template cover.
 #
 # Prerequis (par volet) :
-#   - Un input_number "position actuelle" (min: 0, max: 100, pas: 1)
-#   - Un input_number "position cible" (min: 0, max: 100, pas: 1)
-#   - Un input_button pour la synchro manuelle
+#   - Un template cover dans configuration.yaml
+#   - Un input_number "position" (min: 0, max: 100, pas: 1)
+#   - Un input_number "cible" (min: 0, max: 100, pas: 1)
+#   - Un input_button pour la synchro (partage possible)
 # ============================================================================
 
 blueprint:
   name: "Volet - Controle par position estimee"
   description: >
     Controle un volet sans retour de position en estimant sa position
-    par le temps de course. Compatible avec le slider, les boutons
-    ouvrir/fermer et les commandes vocales. La position se met a jour
-    en temps reel. Recalibrage automatique chaque nuit via Alarmo.
+    par le temps de course. Fonctionne avec un template cover pour
+    supporter boutons, voix et slider nativement.
     0% = ferme, 100% = ouvert.
   domain: automation
 
@@ -32,8 +29,10 @@ blueprint:
       collapsed: false
       input:
         cover_entity:
-          name: Volet
-          description: L'entite cover du volet.
+          name: Volet reel
+          description: >
+            L'entite cover REELLE du volet (pas le template cover).
+            Ex: cover.volet_cuisine
           selector:
             entity:
               filter:
@@ -54,9 +53,8 @@ blueprint:
         position_helper:
           name: Position actuelle (input_number)
           description: >
-            Affiche la position estimee en temps reel (0-100%).
-            Cree un input_number : min 0, max 100, pas 1.
-            Mis a jour automatiquement, ne pas modifier manuellement.
+            input_number (min: 0, max: 100, pas: 1).
+            Mis a jour automatiquement chaque seconde.
           selector:
             entity:
               filter:
@@ -65,8 +63,8 @@ blueprint:
         target_helper:
           name: Position cible (input_number)
           description: >
-            Slider pour controler le volet au pourcentage.
-            Cree un input_number : min 0, max 100, pas 1.
+            input_number (min: 0, max: 100, pas: 1).
+            Modifie par le template cover (boutons, voix, slider).
           selector:
             entity:
               filter:
@@ -102,22 +100,10 @@ variables:
   travel_time: !input travel_time
 
 triggers:
-  # Slider de position cible modifie
+  # Cible modifiee (par template cover, slider, ou recalibrage)
   - trigger: state
     entity_id: !input target_helper
     id: "target_changed"
-
-  # Volet en ouverture (bouton HA, voix, ou commande du blueprint)
-  - trigger: state
-    entity_id: !input cover_entity
-    to: "opening"
-    id: "cover_opening"
-
-  # Volet en fermeture (bouton HA, voix, ou commande du blueprint)
-  - trigger: state
-    entity_id: !input cover_entity
-    to: "closing"
-    id: "cover_closing"
 
   # Alarmo mode nuit -> recalibrage
   - trigger: state
@@ -132,22 +118,31 @@ triggers:
 
 actions:
   - choose:
-      # --- Cible modifiee via slider : stopper et relancer ---
-      # Le cover_opening/closing prendra le relais via restart
+      # --- Deplacement vers la cible ---
       - conditions:
           - condition: trigger
             id: "target_changed"
         sequence:
+          # Stopper tout mouvement en cours
           - action: cover.stop_cover
             target:
               entity_id: !input cover_entity
           - delay: 1
+
+          # Calculer le mouvement
           - variables:
               current_pos: "{{ states(position_helper) | float(0) }}"
               target_pos: "{{ states(target_helper) | float(0) }}"
+              distance: "{{ (target_pos - current_pos) | abs }}"
+              duration: "{{ (distance / 100 * (travel_time | float)) | round(0) | int }}"
               direction: "{{ 'open' if target_pos > current_pos else 'close' }}"
+              step_per_sec: "{{ 100 / (travel_time | float) }}"
+
+          # Rien a faire si deja a la bonne position
           - condition: template
-            value_template: "{{ ((target_pos - current_pos) | abs) > 0 }}"
+            value_template: "{{ duration > 0 }}"
+
+          # Lancer le mouvement sur le vrai volet
           - if:
               - condition: template
                 value_template: "{{ direction == 'open' }}"
@@ -160,118 +155,35 @@ actions:
                 target:
                   entity_id: !input cover_entity
 
-      # --- Ouverture detectee : suivre la position ---
-      - conditions:
-          - condition: trigger
-            id: "cover_opening"
-        sequence:
-          - variables:
-              current_pos: "{{ states(position_helper) | float(0) }}"
-              # Si la cible a ete modifiee recemment, on l'utilise
-              # Sinon c'est un appui direct/voix -> ouvrir a 100%
-              target_pos: >
-                {% if (as_timestamp(now()) - as_timestamp(states[target_helper].last_changed)) < 5 %}
-                  {{ states(target_helper) | float(100) }}
-                {% else %}
-                  100
-                {% endif %}
-              distance: "{{ ((target_pos | float) - current_pos) | abs }}"
-              duration: "{{ (distance / 100 * (travel_time | float)) | round(0) | int }}"
-              step_per_sec: "{{ 100 / (travel_time | float) }}"
-          - condition: template
-            value_template: "{{ duration > 0 }}"
+          # Mise a jour en temps reel chaque seconde
           - repeat:
-              while:
-                - condition: template
-                  value_template: "{{ repeat.index <= duration and is_state(cover_id, 'opening') }}"
+              count: "{{ duration }}"
               sequence:
                 - delay: 1
                 - action: input_number.set_value
                   target:
                     entity_id: !input position_helper
                   data:
-                    value: "{{ [100, ((current_pos + step_per_sec * repeat.index) | round(0))] | min }}"
-          # Verifier si mouvement complet ou arret premature
-          - if:
-              - condition: template
-                value_template: "{{ is_state(cover_id, 'opening') }}"
-            then:
-              # Mouvement complet : arreter et position exacte
-              - action: cover.stop_cover
-                target:
-                  entity_id: !input cover_entity
-              - action: input_number.set_value
-                target:
-                  entity_id: !input position_helper
-                data:
-                  value: "{{ (target_pos | float) | round(0) }}"
-              - action: input_number.set_value
-                target:
-                  entity_id: !input target_helper
-                data:
-                  value: "{{ (target_pos | float) | round(0) }}"
-            else:
-              # Arret premature (stop) : synchroniser la cible
-              - action: input_number.set_value
-                target:
-                  entity_id: !input target_helper
-                data:
-                  value: "{{ states(position_helper) | float(0) | round(0) }}"
+                    value: >
+                      {% if direction == 'open' %}
+                        {{ [100, ((current_pos + step_per_sec * repeat.index) | round(0))] | min }}
+                      {% else %}
+                        {{ [0, ((current_pos - step_per_sec * repeat.index) | round(0))] | max }}
+                      {% endif %}
 
-      # --- Fermeture detectee : suivre la position ---
-      - conditions:
-          - condition: trigger
-            id: "cover_closing"
-        sequence:
-          - variables:
-              current_pos: "{{ states(position_helper) | float(100) }}"
-              target_pos: >
-                {% if (as_timestamp(now()) - as_timestamp(states[target_helper].last_changed)) < 5 %}
-                  {{ states(target_helper) | float(0) }}
-                {% else %}
-                  0
-                {% endif %}
-              distance: "{{ (current_pos - (target_pos | float)) | abs }}"
-              duration: "{{ (distance / 100 * (travel_time | float)) | round(0) | int }}"
-              step_per_sec: "{{ 100 / (travel_time | float) }}"
-          - condition: template
-            value_template: "{{ duration > 0 }}"
-          - repeat:
-              while:
-                - condition: template
-                  value_template: "{{ repeat.index <= duration and is_state(cover_id, 'closing') }}"
-              sequence:
-                - delay: 1
-                - action: input_number.set_value
-                  target:
-                    entity_id: !input position_helper
-                  data:
-                    value: "{{ [0, ((current_pos - step_per_sec * repeat.index) | round(0))] | max }}"
-          - if:
-              - condition: template
-                value_template: "{{ is_state(cover_id, 'closing') }}"
-            then:
-              - action: cover.stop_cover
-                target:
-                  entity_id: !input cover_entity
-              - action: input_number.set_value
-                target:
-                  entity_id: !input position_helper
-                data:
-                  value: "{{ (target_pos | float) | round(0) }}"
-              - action: input_number.set_value
-                target:
-                  entity_id: !input target_helper
-                data:
-                  value: "{{ (target_pos | float) | round(0) }}"
-            else:
-              - action: input_number.set_value
-                target:
-                  entity_id: !input target_helper
-                data:
-                  value: "{{ states(position_helper) | float(0) | round(0) }}"
+          # Arreter et finaliser
+          - action: cover.stop_cover
+            target:
+              entity_id: !input cover_entity
+          - action: input_number.set_value
+            target:
+              entity_id: !input position_helper
+            data:
+              value: "{{ target_pos | round(0) }}"
 
       # --- Recalibrage (nuit ou manuel) ---
+      # Force la position a 100% puis cible a 0% pour garantir
+      # une fermeture complete sur tout le temps de course
       - conditions:
           - condition: or
             conditions:
@@ -280,8 +192,13 @@ actions:
               - condition: trigger
                 id: "manual_recalib"
         sequence:
-          # Fermer le volet : cover_closing prend le relais
-          # et track la fermeture vers 0%
-          - action: cover.close_cover
+          - action: input_number.set_value
             target:
-              entity_id: !input cover_entity
+              entity_id: !input position_helper
+            data:
+              value: 100
+          - action: input_number.set_value
+            target:
+              entity_id: !input target_helper
+            data:
+              value: 0
