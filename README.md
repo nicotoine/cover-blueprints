@@ -17,20 +17,19 @@ Blueprints Home Assistant pour automatiser un aspirateur **Roborock** (testé av
 
 Lance l'aspirateur dans les pièces choisies quand l'alarme passe en mode absent. Arrête automatiquement si quelqu'un rentre.
 
-<!-- Remplace TON_USER/TON_REPO par ton URL GitHub réelle -->
-[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FTON_USER%2Froborock-ha-blueprints%2Fblob%2Fmain%2Fvacuum_absence%2Fvacuum_absence.yaml)
+[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fnicotoine%2Frobotrock-blueprint%2Fblob%2Fmaster%2Fvacuum_absence%2Fvacuum_absence.yaml)
 
 ### 2. Nettoyage complet après X jours
 
 Vérifie quotidiennement si le dernier nettoyage remonte à plus de X jours. Si oui et que personne n'est là, lance un nettoyage complet (avec lavage optionnel).
 
-[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FTON_USER%2Froborock-ha-blueprints%2Fblob%2Fmain%2Fvacuum_deep_clean%2Fvacuum_deep_clean.yaml)
+[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fnicotoine%2Frobotrock-blueprint%2Fblob%2Fmaster%2Fvacuum_deep_clean%2Fvacuum_deep_clean.yaml)
 
 ### 3. Surveillance, rappels & tracker
 
 Alerte en cas d'erreur, rappel si pas de passage depuis X jours (avec bouton actionnable), et mise à jour automatique du tracker.
 
-[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FTON_USER%2Froborock-ha-blueprints%2Fblob%2Fmain%2Fvacuum_monitoring%2Fvacuum_monitoring.yaml)
+[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fnicotoine%2Frobotrock-blueprint%2Fblob%2Fmaster%2Fvacuum_monitoring%2Fvacuum_monitoring.yaml)
 
 ## 🚀 Installation
 
@@ -40,13 +39,12 @@ Alerte en cas d'erreur, rappel si pas de passage depuis X jours (avec bouton act
 2. Home Assistant s'ouvre et te propose d'importer le blueprint
 3. Configure l'automatisation via l'UI
 
-> ⚠️ **Avant d'importer**, remplace `TON_USER/roborock-ha-blueprints` dans les URLs par ton vrai chemin GitHub.
 
 ### Méthode 2 : Installation manuelle
 
 ```bash
 cd config/blueprints/automation/
-git clone https://github.com/TON_USER/roborock-ha-blueprints.git roborock
+git clone https://github.com/nicotoine/robotrock-blueprint.git roborock
 ```
 
 Puis dans Home Assistant :
