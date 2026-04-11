@@ -1,25 +1,28 @@
 # ============================================================================
 # BLUEPRINT : Controle de volet par position estimee
 # ============================================================================
-# Fonctionne avec un template cover qui route toutes les commandes
-# (boutons, voix, slider, set_position) vers la cible.
-# Le blueprint gere le mouvement et la mise a jour en temps reel.
+# Toutes les commandes passent par les helpers :
+#   - Ouvrir  : mettre la cible a 100
+#   - Fermer  : mettre la cible a 0
+#   - Stop    : appuyer sur le bouton stop
+#   - Slider  : changer la cible a la valeur souhaitee
 #
-# Voir README pour la configuration du template cover.
+# Le blueprint gere le mouvement reel et la position en temps reel.
+# Pas besoin de template cover dans configuration.yaml.
 #
 # Prerequis (par volet) :
-#   - Un template cover dans configuration.yaml
-#   - Un input_number "position" (min: 0, max: 100, pas: 1)
-#   - Un input_number "cible" (min: 0, max: 100, pas: 1)
-#   - Un input_button pour la synchro (partage possible)
+#   - input_number "position" (min: 0, max: 100, pas: 1)
+#   - input_number "cible" (min: 0, max: 100, pas: 1)
+#   - input_button "stop" (un par volet)
+#   - input_button "synchro" (partage possible)
 # ============================================================================
 
 blueprint:
   name: "Volet - Controle par position estimee"
   description: >
     Controle un volet sans retour de position en estimant sa position
-    par le temps de course. Fonctionne avec un template cover pour
-    supporter boutons, voix et slider nativement.
+    par le temps de course. Pilotez via le slider cible, ou avec
+    des boutons qui mettent la cible a 100 (ouvrir) ou 0 (fermer).
     0% = ferme, 100% = ouvert.
   domain: automation
 
@@ -31,8 +34,7 @@ blueprint:
         cover_entity:
           name: Volet reel
           description: >
-            L'entite cover REELLE du volet (pas le template cover).
-            Ex: cover.volet_cuisine
+            L'entite cover du volet (ex: cover.volet_cuisine).
           selector:
             entity:
               filter:
@@ -42,7 +44,7 @@ blueprint:
           name: Temps de course complet (secondes)
           description: >
             Duree pour une ouverture ou fermeture complete.
-            Verifie dans l'entite number.xxx_time_control de ton volet.
+            Verifie dans l'entite number.xxx_time_control.
           default: 70
           selector:
             number:
@@ -53,8 +55,7 @@ blueprint:
         position_helper:
           name: Position actuelle (input_number)
           description: >
-            input_number (min: 0, max: 100, pas: 1).
-            Mis a jour automatiquement chaque seconde.
+            input_number (0-100, pas 1). Mis a jour automatiquement.
           selector:
             entity:
               filter:
@@ -63,16 +64,29 @@ blueprint:
         target_helper:
           name: Position cible (input_number)
           description: >
-            input_number (min: 0, max: 100, pas: 1).
-            Modifie par le template cover (boutons, voix, slider).
+            input_number (0-100, pas 1). Slider de controle.
           selector:
             entity:
               filter:
                 - domain: input_number
 
+    controle:
+      name: Controle
+      collapsed: false
+      input:
+        stop_button:
+          name: Bouton stop (input_button)
+          description: >
+            Arrete le volet et sauvegarde la position actuelle.
+            Un par volet.
+          selector:
+            entity:
+              filter:
+                - domain: input_button
+
     synchro:
       name: Synchronisation
-      collapsed: false
+      collapsed: true
       input:
         alarm_entity:
           name: Panneau d'alarme (Alarmo)
@@ -83,7 +97,7 @@ blueprint:
                 - domain: alarm_control_panel
 
         sync_button:
-          name: Bouton de synchronisation (input_button)
+          name: Bouton de recalibrage (input_button)
           description: >
             Ferme le volet completement et remet la position a 0%.
           selector:
@@ -100,10 +114,15 @@ variables:
   travel_time: !input travel_time
 
 triggers:
-  # Cible modifiee (par template cover, slider, ou recalibrage)
+  # Cible modifiee (slider, bouton ouvrir/fermer)
   - trigger: state
     entity_id: !input target_helper
     id: "target_changed"
+
+  # Bouton stop
+  - trigger: state
+    entity_id: !input stop_button
+    id: "stop_pressed"
 
   # Alarmo mode nuit -> recalibrage
   - trigger: state
@@ -111,7 +130,7 @@ triggers:
     to: "armed_night"
     id: "night_recalib"
 
-  # Bouton synchro -> recalibrage
+  # Bouton recalibrage
   - trigger: state
     entity_id: !input sync_button
     id: "manual_recalib"
@@ -142,7 +161,7 @@ actions:
           - condition: template
             value_template: "{{ duration > 0 }}"
 
-          # Lancer le mouvement sur le vrai volet
+          # Lancer le mouvement
           - if:
               - condition: template
                 value_template: "{{ direction == 'open' }}"
@@ -181,8 +200,22 @@ actions:
             data:
               value: "{{ target_pos | round(0) }}"
 
+      # --- Stop : arreter et sauvegarder la position ---
+      - conditions:
+          - condition: trigger
+            id: "stop_pressed"
+        sequence:
+          - action: cover.stop_cover
+            target:
+              entity_id: !input cover_entity
+          - action: input_number.set_value
+            target:
+              entity_id: !input target_helper
+            data:
+              value: "{{ states(position_helper) | float(0) | round(0) }}"
+
       # --- Recalibrage (nuit ou manuel) ---
-      # Force la position a 100% puis cible a 0% pour garantir
+      # Force position a 100% puis cible a 0% pour garantir
       # une fermeture complete sur tout le temps de course
       - conditions:
           - condition: or
