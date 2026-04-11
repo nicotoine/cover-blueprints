@@ -9,7 +9,9 @@ Blueprints Home Assistant pour gerer des volets electriques sans retour de posit
 Estime la position d'un volet (0-100%) en se basant sur le temps de course complet. Ideal pour les interrupteurs de volets qui ne remontent pas la position (Etersky WF-CS01, Allevoi CS01, etc.).
 
 **Fonctionnalites :**
-- Calcul automatique de la position a chaque mouvement depuis HA
+- Slider pour controler le volet au pourcentage (position cible)
+- Mise a jour en temps reel de la position estimee (chaque seconde)
+- Gestion des appels consecutifs : si la cible change en cours de mouvement, le volet s'arrete et recalcule
 - Recalibrage automatique chaque nuit via Alarmo (ferme le volet et remet a 0%)
 - Bouton de synchro manuelle pour forcer un recalibrage
 
@@ -23,13 +25,20 @@ Un panneau d'alarme [Alarmo](https://github.com/nielsfaber/alarmo) configure pou
 
 ### Helpers a creer (par volet)
 
-1. **input_number** — Position estimee
+1. **input_number** — Position actuelle
    - **Parametres** > **Appareils et services** > **Entrees**
    - **Creer une entree** > **Nombre**
    - Nom : `Position volet cuisine` (adapter selon la piece)
    - Min : `0`, Max : `100`, Pas : `1`
+   - Ne pas modifier manuellement (mis a jour par l'automatisation)
 
-2. **input_button** — Bouton de synchronisation
+2. **input_number** — Position cible
+   - **Creer une entree** > **Nombre**
+   - Nom : `Cible volet cuisine` (adapter selon la piece)
+   - Min : `0`, Max : `100`, Pas : `1`
+   - C'est le slider pour controler le volet
+
+3. **input_button** — Bouton de synchronisation
    - **Creer une entree** > **Bouton**
    - Nom : `Synchro volets`
    - Un seul bouton peut etre partage entre plusieurs volets
