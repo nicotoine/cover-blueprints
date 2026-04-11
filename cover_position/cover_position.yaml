@@ -153,7 +153,9 @@ actions:
               current_pos: "{{ states(position_helper) | float(0) }}"
               target_pos: "{{ states(target_helper) | float(0) }}"
               distance: "{{ (target_pos - current_pos) | abs }}"
-              duration: "{{ (distance / 100 * (travel_time | float)) | round(0) | int }}"
+              # Ajouter 5s de marge pour 0% et 100% (butee physique = recalibrage naturel)
+              margin: "{{ 5 if (target_pos <= 0 or target_pos >= 100) else 0 }}"
+              duration: "{{ ((distance / 100 * (travel_time | float)) | round(0) | int) + (margin | int) }}"
               direction: "{{ 'open' if target_pos > current_pos else 'close' }}"
               step_per_sec: "{{ 100 / (travel_time | float) }}"
 
