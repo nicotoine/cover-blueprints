@@ -78,6 +78,45 @@ blueprint:
               max: 30
               unit_of_measurement: minutes
 
+    # -- Section Mode de nettoyage --
+    mode_nettoyage:
+      name: Mode de nettoyage
+      collapsed: true
+      input:
+        set_cleaning_mode:
+          name: Forcer le mode de nettoyage
+          description: >
+            Si activé, le mode de nettoyage sera défini avant chaque
+            lancement. Utile pour forcer l'aspiration seule même si
+            la serpillère est montée, ou pour forcer aspiration + lavage.
+          default: false
+          selector:
+            boolean:
+
+        cleaning_mode_entity:
+          name: Entité mode de nettoyage
+          description: >
+            L'entité select qui contrôle le mode de nettoyage de ton
+            Roborock. Pour la trouver : Paramètres > Appareils >
+            ton Roborock > cherche "mop mode" ou "cleaning mode"
+            (ex: select.roborock_qv_35a_mop_mode).
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain: select
+
+        cleaning_mode_value:
+          name: Valeur du mode de nettoyage
+          description: >
+            La valeur à appliquer avant le nettoyage. Vérifie les
+            options disponibles sur ton entité (ex: "off" pour
+            aspiration seule, "standard" pour lavage standard,
+            "deep" pour lavage en profondeur).
+          default: "off"
+          selector:
+            text:
+
     # -- Section Notifications --
     notifications:
       name: Notifications
@@ -107,6 +146,9 @@ variables:
   room_ids_list: "{{ room_ids_str.split(',') | map('trim') | map('int') | list }}"
   do_notify: !input notify_on_return
   notification_service: !input notify_service
+  force_mode: !input set_cleaning_mode
+  mode_entity: !input cleaning_mode_entity
+  mode_value: !input cleaning_mode_value
 
 triggers:
   # Déclencheur 1 : Alarme armée → lancer le nettoyage
@@ -133,6 +175,19 @@ actions:
             entity_id: !input vacuum_entity
             state: "docked"
         sequence:
+          # Force le mode de nettoyage si configuré
+          - if:
+              - condition: template
+                value_template: "{{ force_mode and mode_entity != '' }}"
+            then:
+              - action: select.select_option
+                target:
+                  entity_id: "{{ mode_entity }}"
+                data:
+                  option: "{{ mode_value }}"
+              - delay:
+                  seconds: 2
+
           - action: vacuum.send_command
             target:
               entity_id: !input vacuum_entity
