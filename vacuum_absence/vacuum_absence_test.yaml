@@ -14,47 +14,21 @@ blueprint:
   domain: automation
 
   input:
-    vacuum_entity:
-      name: Aspirateur Roborock
+    vacuum_only_button:
+      name: Bouton aspiration seule
+      description: "Ex: button.roborock_qv_35a_aspiration_complete"
       selector:
         entity:
           filter:
-            - domain: vacuum
+            - domain: button
 
-    room_ids:
-      name: IDs des pièces à nettoyer
-      default: "9,8,5,7,1"
-      selector:
-        text:
-
-    repeat_count:
-      name: Nombre de passages
-      default: 1
-      selector:
-        number:
-          min: 1
-          max: 3
-          mode: slider
-
-    cleaning_mode_entity:
-      name: Entité mode de nettoyage
-      description: "Ex: select.roborock_qv_35a_intensite_de_frottement"
+    mop_button:
+      name: Bouton aspiration + lavage
+      description: "Ex: button.roborock_qv_35a_nettoyage_complet"
       selector:
         entity:
           filter:
-            - domain: select
-
-    vacuum_only_value:
-      name: Valeur aspiration seule
-      default: "off"
-      selector:
-        text:
-
-    mop_value:
-      name: Valeur aspiration + lavage
-      default: "standard"
-      selector:
-        text:
+            - domain: button
 
     days_threshold:
       name: Jours avant lavage automatique
@@ -76,49 +50,38 @@ blueprint:
 mode: single
 
 variables:
-  room_ids_str: !input room_ids
-  room_ids_list: "{{ room_ids_str.split(',') | map('trim') | map('int') | list }}"
-  vacuum_only: !input vacuum_only_value
-  mop: !input mop_value
   days: !input days_threshold
   tracker: !input last_mop_tracker
-  selected_mode: "{{ mop if (as_timestamp(now()) - (states(tracker) | as_timestamp(default=0))) > (days * 86400) else vacuum_only }}"
+  needs_mop: "{{ (as_timestamp(now()) - (states(tracker) | as_timestamp(default=0))) > (days * 86400) }}"
 
 triggers:
-  # Déclenchement manuel uniquement (via "Exécuter" dans l'UI)
   - trigger: event
     event_type: manual_trigger_never_fires
 
 actions:
-  # Log le mode choisi pour debug
+  # Log pour debug
   - action: system_log.write
     data:
-      message: "[TEST VACUUM] tracker={{ tracker }} | state={{ states(tracker) }} | selected_mode={{ selected_mode }} | mop={{ mop }} | vacuum_only={{ vacuum_only }}"
+      message: "[TEST VACUUM] tracker={{ tracker }} | state={{ states(tracker) }} | needs_mop={{ needs_mop }}"
       level: warning
 
-  # Applique le mode de nettoyage
-  - action: select.select_option
-    target:
-      entity_id: !input cleaning_mode_entity
-    data:
-      option: "{{ selected_mode }}"
-  - delay:
-      seconds: 2
-
-  # Lance le nettoyage
-  - action: vacuum.send_command
-    target:
-      entity_id: !input vacuum_entity
-    data:
-      command: app_segment_clean
-      params:
-        - segments: "{{ room_ids_list }}"
-          repeat: !input repeat_count
+  # Lance le bon bouton selon le dernier lavage
+  - if:
+      - condition: template
+        value_template: "{{ needs_mop }}"
+    then:
+      - action: button.press
+        target:
+          entity_id: !input mop_button
+    else:
+      - action: button.press
+        target:
+          entity_id: !input vacuum_only_button
 
   # Met à jour le tracker si lavage effectué
   - if:
       - condition: template
-        value_template: "{{ selected_mode == mop }}"
+        value_template: "{{ needs_mop }}"
     then:
       - action: input_datetime.set_datetime
         target:

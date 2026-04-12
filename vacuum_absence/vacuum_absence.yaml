@@ -6,9 +6,10 @@
 #
 # Fonctionnement :
 #   - Se déclenche quand l'alarme passe en "armé absent"
-#   - Attend un délai configurable puis lance l'aspirateur
+#   - Attend un délai configurable puis lance le nettoyage
 #   - Aspiration seule par défaut, aspiration + lavage si le dernier
 #     lavage remonte à plus de X jours
+#   - Utilise les routines Roborock (boutons) pour lancer le nettoyage
 #   - Si quelqu'un rentre (alarme désarmée), l'aspirateur retourne à la base
 #   - Envoie une notification au retour si l'aspirateur tournait
 # ============================================================================
@@ -16,9 +17,10 @@
 blueprint:
   name: "Roborock - Nettoyage intelligent en absence"
   description: >
-    Lance l'aspirateur Roborock quand l'alarme est armée en mode absent.
+    Lance le nettoyage Roborock quand l'alarme est armée en mode absent.
     Aspiration seule par défaut ; aspiration + lavage automatique si le
-    dernier nettoyage complet remonte à plus de X jours.
+    dernier lavage remonte à plus de X jours.
+    Utilise les routines Roborock (boutons) configurées dans l'app.
     L'aspirateur retourne à sa base si quelqu'un rentre.
   domain: automation
 
@@ -30,31 +32,33 @@ blueprint:
       input:
         vacuum_entity:
           name: Aspirateur Roborock
-          description: Sélectionne ton aspirateur Roborock.
+          description: >
+            L'entité aspirateur, utilisée pour vérifier qu'il est à
+            la base et pour le renvoyer au retour.
           selector:
             entity:
               filter:
                 - domain: vacuum
 
-        room_ids:
-          name: IDs des pièces à nettoyer
+        vacuum_only_button:
+          name: Bouton aspiration seule
           description: >
-            Liste des IDs de pièces séparés par des virgules (ex: 9,8,5,7,1).
-            Pour trouver les IDs : Outils de développement > Actions >
-            roborock.get_maps > sélectionne ton aspirateur.
-          default: "9,8,5,7,1"
+            Le bouton de la routine Roborock pour l'aspiration seule
+            (ex: button.roborock_qv_35a_aspiration_complete).
           selector:
-            text:
+            entity:
+              filter:
+                - domain: button
 
-        repeat_count:
-          name: Nombre de passages
-          description: Combien de fois l'aspirateur passe dans chaque pièce.
-          default: 1
+        mop_button:
+          name: Bouton aspiration + lavage
+          description: >
+            Le bouton de la routine Roborock pour l'aspiration + lavage
+            (ex: button.roborock_qv_35a_nettoyage_complet).
           selector:
-            number:
-              min: 1
-              max: 3
-              mode: slider
+            entity:
+              filter:
+                - domain: button
 
     # -- Section Alarme & Présence --
     presence:
@@ -86,35 +90,6 @@ blueprint:
       name: Mode de nettoyage
       collapsed: false
       input:
-        cleaning_mode_entity:
-          name: Entité mode de nettoyage
-          description: >
-            L'entité select qui contrôle le mode de nettoyage de ton
-            Roborock (ex: select.roborock_qv_35a_intensite_de_frottement).
-            Pour la trouver : Paramètres > Appareils > ton Roborock.
-          selector:
-            entity:
-              filter:
-                - domain: select
-
-        vacuum_only_value:
-          name: Valeur aspiration seule
-          description: >
-            La valeur qui désactive le lavage sur ton entité
-            (ex: "off", "fermé").
-          default: "off"
-          selector:
-            text:
-
-        mop_value:
-          name: Valeur aspiration + lavage
-          description: >
-            La valeur pour activer le lavage
-            (ex: "standard", "deep", "intense").
-          default: "standard"
-          selector:
-            text:
-
         days_threshold:
           name: Jours avant lavage automatique
           description: >
@@ -166,15 +141,11 @@ mode: restart
 max_exceeded: silent
 
 variables:
-  room_ids_str: !input room_ids
-  room_ids_list: "{{ room_ids_str.split(',') | map('trim') | map('int') | list }}"
   do_notify: !input notify_on_return
   notification_service: !input notify_service
-  vacuum_only: !input vacuum_only_value
-  mop: !input mop_value
   days: !input days_threshold
   tracker: !input last_mop_tracker
-  selected_mode: "{{ mop if (as_timestamp(now()) - (states(tracker) | as_timestamp(default=0))) > (days * 86400) else vacuum_only }}"
+  needs_mop: "{{ (as_timestamp(now()) - (states(tracker) | as_timestamp(default=0))) > (days * 86400) }}"
 
 triggers:
   # Déclencheur 1 : Alarme armée → lancer le nettoyage
@@ -193,7 +164,7 @@ triggers:
 
 actions:
   - choose:
-      # --- Cas 1 : Tout le monde est parti → on lance l'aspirateur ---
+      # --- Cas 1 : Tout le monde est parti → on lance le nettoyage ---
       - conditions:
           - condition: trigger
             id: "absence_detected"
@@ -201,29 +172,23 @@ actions:
             entity_id: !input vacuum_entity
             state: "docked"
         sequence:
-          # Applique le mode de nettoyage (lavage si dernier passage > X jours)
-          - action: select.select_option
-            target:
-              entity_id: !input cleaning_mode_entity
-            data:
-              option: "{{ selected_mode }}"
-          - delay:
-              seconds: 2
-
-          # Lance le nettoyage
-          - action: vacuum.send_command
-            target:
-              entity_id: !input vacuum_entity
-            data:
-              command: app_segment_clean
-              params:
-                - segments: "{{ room_ids_list }}"
-                  repeat: !input repeat_count
+          # Lance le bon bouton selon le dernier lavage
+          - if:
+              - condition: template
+                value_template: "{{ needs_mop }}"
+            then:
+              - action: button.press
+                target:
+                  entity_id: !input mop_button
+            else:
+              - action: button.press
+                target:
+                  entity_id: !input vacuum_only_button
 
           # Met à jour le tracker si lavage effectué
           - if:
               - condition: template
-                value_template: "{{ selected_mode == mop }}"
+                value_template: "{{ needs_mop }}"
             then:
               - action: input_datetime.set_datetime
                 target:
