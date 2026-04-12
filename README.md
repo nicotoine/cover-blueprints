@@ -4,9 +4,10 @@ Blueprints Home Assistant pour automatiser un aspirateur **Roborock** (testé av
 
 ## ✨ Fonctionnalités
 
-- **Aspiration automatique en absence** — quand tout le monde quitte la maison
+- **Nettoyage intelligent en absence** — aspiration seule ou + lavage selon le dernier passage
 - **Arrêt automatique au retour** — l'aspirateur rentre à la base
-- **Nettoyage complet planifié** — aspiration + lavage si pas de passage depuis X jours
+- **Routines planifiées** — actions à heures fixes avec conditions alarme et fréquence
+- **Actions configurables** — boutons Roborock, services HA, ou n'importe quelle action
 - **Rappels intelligents** — notification avec bouton pour lancer le nettoyage
 - **Surveillance** — alertes en cas d'erreur / aspirateur bloqué
 - **Tracker automatique** — enregistre la date du dernier nettoyage
@@ -23,13 +24,22 @@ Lance l'aspirateur quand l'alarme passe en mode absent. Choisit automatiquement 
 >
 > [![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fnicotoine%2Frobotrock-blueprint%2Fblob%2Fmaster%2Fvacuum_absence%2Fvacuum_absence_test.yaml)
 
-### 2. Nettoyage complet après X jours (legacy)
+### 2. Routine planifiée
+
+Lance une routine Roborock à heures fixes (jusqu'à 2 par jour) avec conditions sur l'état de l'alarme et fréquence configurable. Créer une automatisation par routine. Exemples :
+- Litière à 9h et 18h sauf en mode nuit
+- Aspiration cuisine tous les jours à 14h si absent
+- Nettoyage complet tous les 3 jours à 10h
+
+[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fnicotoine%2Frobotrock-blueprint%2Fblob%2Fmaster%2Fvacuum_scheduled%2Fvacuum_scheduled.yaml)
+
+### 3. Nettoyage complet après X jours (legacy)
 
 Vérifie quotidiennement si le dernier nettoyage remonte à plus de X jours. Si oui et que personne n'est là, lance un nettoyage complet (avec lavage optionnel). Cette logique est désormais intégrée au blueprint 1.
 
 [![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fnicotoine%2Frobotrock-blueprint%2Fblob%2Fmaster%2Fvacuum_deep_clean%2Fvacuum_deep_clean.yaml)
 
-### 3. Surveillance, rappels & tracker
+### 4. Surveillance, rappels & tracker
 
 Alerte en cas d'erreur, rappel si pas de passage depuis X jours (avec bouton actionnable), et mise à jour automatique du tracker.
 
