@@ -8,7 +8,7 @@
 #   - Se déclenche quand l'alarme passe en "armé absent"
 #   - Attend un délai configurable puis lance l'aspirateur
 #   - Aspiration seule par défaut, aspiration + lavage si le dernier
-#     nettoyage complet remonte à plus de X jours
+#     lavage remonte à plus de X jours
 #   - Si quelqu'un rentre (alarme désarmée), l'aspirateur retourne à la base
 #   - Envoie une notification au retour si l'aspirateur tournait
 # ============================================================================
@@ -170,18 +170,10 @@ variables:
   room_ids_list: "{{ room_ids_str.split(',') | map('trim') | map('int') | list }}"
   do_notify: !input notify_on_return
   notification_service: !input notify_service
-  mode_entity: !input cleaning_mode_entity
   vacuum_only: !input vacuum_only_value
   mop: !input mop_value
   days: !input days_threshold
-  threshold_seconds: "{{ days * 86400 }}"
   tracker: !input last_mop_tracker
-  cleaning_mode: >
-    {% set dernier = states(tracker) %}
-    {% set needs_mop = dernier in ['unknown', 'unavailable', 'None', '']
-       or (now() - strptime(dernier, '%Y-%m-%d %H:%M:%S')).total_seconds()
-       > threshold_seconds %}
-    {{ mop if needs_mop else vacuum_only }}
 
 triggers:
   # Déclencheur 1 : Alarme armée → lancer le nettoyage
@@ -208,12 +200,16 @@ actions:
             entity_id: !input vacuum_entity
             state: "docked"
         sequence:
-          # Définit le mode selon le dernier lavage
+          # Détermine le mode : lavage si dernier passage > X jours
+          - variables:
+              selected_mode: "{{ mop if (as_timestamp(now()) - (states(tracker) | as_timestamp(default=0))) > (days * 86400) else vacuum_only }}"
+
+          # Applique le mode de nettoyage
           - action: select.select_option
             target:
-              entity_id: "{{ mode_entity }}"
+              entity_id: !input cleaning_mode_entity
             data:
-              option: "{{ cleaning_mode }}"
+              option: "{{ selected_mode }}"
           - delay:
               seconds: 2
 
@@ -230,7 +226,7 @@ actions:
           # Met à jour le tracker si lavage effectué
           - if:
               - condition: template
-                value_template: "{{ cleaning_mode == mop }}"
+                value_template: "{{ selected_mode == mop }}"
             then:
               - action: input_datetime.set_datetime
                 target:
