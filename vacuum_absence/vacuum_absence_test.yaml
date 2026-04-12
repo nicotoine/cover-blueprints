@@ -1,0 +1,127 @@
+# ============================================================================
+# VERSION DE TEST - Nettoyage intelligent (déclenchement manuel)
+# ============================================================================
+# À supprimer après les tests.
+# Lancer depuis : Paramètres > Automatisations > clic sur l'automatisation
+#   > menu 3 points > Exécuter
+# ============================================================================
+
+blueprint:
+  name: "[TEST] Roborock - Nettoyage intelligent (manuel)"
+  description: >
+    Version de test du blueprint de nettoyage intelligent.
+    Se lance manuellement, sans condition d'alarme ni de présence.
+  domain: automation
+
+  input:
+    vacuum_entity:
+      name: Aspirateur Roborock
+      selector:
+        entity:
+          filter:
+            - domain: vacuum
+
+    room_ids:
+      name: IDs des pièces à nettoyer
+      default: "9,8,5,7,1"
+      selector:
+        text:
+
+    repeat_count:
+      name: Nombre de passages
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 3
+          mode: slider
+
+    cleaning_mode_entity:
+      name: Entité mode de nettoyage
+      description: "Ex: select.roborock_qv_35a_intensite_de_frottement"
+      selector:
+        entity:
+          filter:
+            - domain: select
+
+    vacuum_only_value:
+      name: Valeur aspiration seule
+      default: "off"
+      selector:
+        text:
+
+    mop_value:
+      name: Valeur aspiration + lavage
+      default: "standard"
+      selector:
+        text:
+
+    days_threshold:
+      name: Jours avant lavage automatique
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 14
+          unit_of_measurement: jours
+          mode: slider
+
+    last_mop_tracker:
+      name: Tracker du dernier lavage
+      selector:
+        entity:
+          filter:
+            - domain: input_datetime
+
+mode: single
+
+variables:
+  room_ids_str: !input room_ids
+  room_ids_list: "{{ room_ids_str.split(',') | map('trim') | map('int') | list }}"
+  vacuum_only: !input vacuum_only_value
+  mop: !input mop_value
+  days: !input days_threshold
+  tracker: !input last_mop_tracker
+  selected_mode: "{{ mop if (as_timestamp(now()) - (states(tracker) | as_timestamp(default=0))) > (days * 86400) else vacuum_only }}"
+
+triggers:
+  # Déclenchement manuel uniquement (via "Exécuter" dans l'UI)
+  - trigger: event
+    event_type: manual_trigger_never_fires
+
+actions:
+  # Log le mode choisi pour debug
+  - action: system_log.write
+    data:
+      message: "[TEST VACUUM] tracker={{ tracker }} | state={{ states(tracker) }} | selected_mode={{ selected_mode }} | mop={{ mop }} | vacuum_only={{ vacuum_only }}"
+      level: warning
+
+  # Applique le mode de nettoyage
+  - action: select.select_option
+    target:
+      entity_id: !input cleaning_mode_entity
+    data:
+      option: "{{ selected_mode }}"
+  - delay:
+      seconds: 2
+
+  # Lance le nettoyage
+  - action: vacuum.send_command
+    target:
+      entity_id: !input vacuum_entity
+    data:
+      command: app_segment_clean
+      params:
+        - segments: "{{ room_ids_list }}"
+          repeat: !input repeat_count
+
+  # Met à jour le tracker si lavage effectué
+  - if:
+      - condition: template
+        value_template: "{{ selected_mode == mop }}"
+    then:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: !input last_mop_tracker
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
