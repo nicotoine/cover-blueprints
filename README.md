@@ -13,15 +13,19 @@ Blueprints Home Assistant pour automatiser un aspirateur **Roborock** (testé av
 
 ## 📦 Blueprints inclus
 
-### 1. Aspirer en absence
+### 1. Nettoyage intelligent en absence
 
-Lance l'aspirateur dans les pièces choisies quand l'alarme passe en mode absent. Arrête automatiquement si quelqu'un rentre.
+Lance l'aspirateur quand l'alarme passe en mode absent. Choisit automatiquement le mode de nettoyage : aspiration seule par défaut, aspiration + lavage si le dernier lavage remonte à plus de X jours. Arrête automatiquement si quelqu'un rentre.
 
 [![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fnicotoine%2Frobotrock-blueprint%2Fblob%2Fmaster%2Fvacuum_absence%2Fvacuum_absence.yaml)
 
-### 2. Nettoyage complet après X jours
+> **Version de test** (déclenchement manuel, sans condition d'alarme) :
+>
+> [![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fnicotoine%2Frobotrock-blueprint%2Fblob%2Fmaster%2Fvacuum_absence%2Fvacuum_absence_test.yaml)
 
-Vérifie quotidiennement si le dernier nettoyage remonte à plus de X jours. Si oui et que personne n'est là, lance un nettoyage complet (avec lavage optionnel).
+### 2. Nettoyage complet après X jours (legacy)
+
+Vérifie quotidiennement si le dernier nettoyage remonte à plus de X jours. Si oui et que personne n'est là, lance un nettoyage complet (avec lavage optionnel). Cette logique est désormais intégrée au blueprint 1.
 
 [![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fnicotoine%2Frobotrock-blueprint%2Fblob%2Fmaster%2Fvacuum_deep_clean%2Fvacuum_deep_clean.yaml)
 
