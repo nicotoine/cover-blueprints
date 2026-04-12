@@ -14,21 +14,32 @@ blueprint:
   domain: automation
 
   input:
-    vacuum_only_button:
-      name: Bouton aspiration seule
-      description: "Ex: button.roborock_qv_35a_aspiration_complete"
+    vacuum_only_actions:
+      name: Actions aspiration seule
+      description: >
+        Actions exécutées quand le dernier lavage est récent.
+        Ex: appuyer sur le bouton "aspiration complète".
+      default: []
       selector:
-        entity:
-          filter:
-            - domain: button
+        action:
 
-    mop_button:
-      name: Bouton aspiration + lavage
-      description: "Ex: button.roborock_qv_35a_nettoyage_complet"
+    mop_actions:
+      name: Actions aspiration + lavage
+      description: >
+        Actions exécutées quand le dernier lavage remonte à plus
+        de X jours. Ex: appuyer sur le bouton "nettoyage complet".
+      default: []
       selector:
-        entity:
-          filter:
-            - domain: button
+        action:
+
+    always_actions:
+      name: Actions systématiques (optionnel)
+      description: >
+        Actions exécutées à chaque fois, quel que soit le mode.
+        Ex: nettoyage litière.
+      default: []
+      selector:
+        action:
 
     days_threshold:
       name: Jours avant lavage automatique
@@ -65,18 +76,16 @@ actions:
       message: "[TEST VACUUM] tracker={{ tracker }} | state={{ states(tracker) }} | needs_mop={{ needs_mop }}"
       level: warning
 
-  # Lance le bon bouton selon le dernier lavage
+  # Actions systématiques
+  - choose: []
+    default: !input always_actions
+
+  # Actions selon le mode
   - if:
       - condition: template
         value_template: "{{ needs_mop }}"
-    then:
-      - action: button.press
-        target:
-          entity_id: !input mop_button
-    else:
-      - action: button.press
-        target:
-          entity_id: !input vacuum_only_button
+    then: !input mop_actions
+    else: !input vacuum_only_actions
 
   # Met à jour le tracker si lavage effectué
   - if:

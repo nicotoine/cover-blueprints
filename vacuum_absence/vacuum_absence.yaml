@@ -9,7 +9,8 @@
 #   - Attend un délai configurable puis lance le nettoyage
 #   - Aspiration seule par défaut, aspiration + lavage si le dernier
 #     lavage remonte à plus de X jours
-#   - Utilise les routines Roborock (boutons) pour lancer le nettoyage
+#   - Actions configurables via les routines Roborock (boutons) ou
+#     n'importe quelle action Home Assistant
 #   - Si quelqu'un rentre (alarme désarmée), l'aspirateur retourne à la base
 #   - Envoie une notification au retour si l'aspirateur tournait
 # ============================================================================
@@ -20,7 +21,8 @@ blueprint:
     Lance le nettoyage Roborock quand l'alarme est armée en mode absent.
     Aspiration seule par défaut ; aspiration + lavage automatique si le
     dernier lavage remonte à plus de X jours.
-    Utilise les routines Roborock (boutons) configurées dans l'app.
+    Les actions sont entièrement configurables (boutons Roborock,
+    appels de service, etc.).
     L'aspirateur retourne à sa base si quelqu'un rentre.
   domain: automation
 
@@ -39,26 +41,6 @@ blueprint:
             entity:
               filter:
                 - domain: vacuum
-
-        vacuum_only_button:
-          name: Bouton aspiration seule
-          description: >
-            Le bouton de la routine Roborock pour l'aspiration seule
-            (ex: button.roborock_qv_35a_aspiration_complete).
-          selector:
-            entity:
-              filter:
-                - domain: button
-
-        mop_button:
-          name: Bouton aspiration + lavage
-          description: >
-            Le bouton de la routine Roborock pour l'aspiration + lavage
-            (ex: button.roborock_qv_35a_nettoyage_complet).
-          selector:
-            entity:
-              filter:
-                - domain: button
 
     # -- Section Alarme & Présence --
     presence:
@@ -94,7 +76,8 @@ blueprint:
           name: Jours avant lavage automatique
           description: >
             Si le dernier lavage remonte à plus de ce nombre de jours,
-            le nettoyage inclura automatiquement le lavage.
+            les actions "aspiration + lavage" seront exécutées à la
+            place des actions "aspiration seule".
           default: 2
           selector:
             number:
@@ -115,6 +98,38 @@ blueprint:
             entity:
               filter:
                 - domain: input_datetime
+
+    # -- Section Actions --
+    actions:
+      name: Actions de nettoyage
+      collapsed: false
+      input:
+        vacuum_only_actions:
+          name: Actions aspiration seule
+          description: >
+            Actions exécutées quand le dernier lavage est récent.
+            Ex: appuyer sur le bouton "aspiration complète".
+          default: []
+          selector:
+            action:
+
+        mop_actions:
+          name: Actions aspiration + lavage
+          description: >
+            Actions exécutées quand le dernier lavage remonte à plus
+            de X jours. Ex: appuyer sur le bouton "nettoyage complet".
+          default: []
+          selector:
+            action:
+
+        always_actions:
+          name: Actions systématiques (optionnel)
+          description: >
+            Actions exécutées à chaque départ, quel que soit le mode
+            de nettoyage. Ex: nettoyage litière, allumer une lumière...
+          default: []
+          selector:
+            action:
 
     # -- Section Notifications --
     notifications:
@@ -172,18 +187,16 @@ actions:
             entity_id: !input vacuum_entity
             state: "docked"
         sequence:
-          # Lance le bon bouton selon le dernier lavage
+          # Actions systématiques (toujours exécutées)
+          - choose: []
+            default: !input always_actions
+
+          # Actions selon le mode de nettoyage
           - if:
               - condition: template
                 value_template: "{{ needs_mop }}"
-            then:
-              - action: button.press
-                target:
-                  entity_id: !input mop_button
-            else:
-              - action: button.press
-                target:
-                  entity_id: !input vacuum_only_button
+            then: !input mop_actions
+            else: !input vacuum_only_actions
 
           # Met à jour le tracker si lavage effectué
           - if:
