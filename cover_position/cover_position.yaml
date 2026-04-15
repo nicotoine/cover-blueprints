@@ -217,8 +217,8 @@ actions:
               value: "{{ states(position_helper) | float(0) | round(0) }}"
 
       # --- Recalibrage (nuit ou manuel) ---
-      # Force position a 100% puis cible a 0% pour garantir
-      # une fermeture complete sur tout le temps de course
+      # Ferme le volet completement sur tout le temps de course
+      # puis remet position et cible a 0%
       - conditions:
           - condition: or
             conditions:
@@ -227,11 +227,30 @@ actions:
               - condition: trigger
                 id: "manual_recalib"
         sequence:
+          # Stopper tout mouvement en cours
+          - action: cover.stop_cover
+            target:
+              entity_id: !input cover_entity
+          - delay: 1
+
+          # Fermer le volet directement
+          - action: cover.close_cover
+            target:
+              entity_id: !input cover_entity
+
+          # Attendre le temps de course complet + marge de butee
+          - delay:
+              seconds: "{{ (travel_time | int) + 5 }}"
+
+          # Stopper et finaliser a 0%
+          - action: cover.stop_cover
+            target:
+              entity_id: !input cover_entity
           - action: input_number.set_value
             target:
               entity_id: !input position_helper
             data:
-              value: 100
+              value: 0
           - action: input_number.set_value
             target:
               entity_id: !input target_helper
