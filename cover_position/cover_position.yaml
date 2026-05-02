@@ -52,6 +52,21 @@ blueprint:
               max: 300
               unit_of_measurement: secondes
 
+        extra_time:
+          name: Temps supplementaire aux butees (secondes)
+          description: >
+            Temps additionnel ajoute lors d'une ouverture ou fermeture
+            complete (cible 0% ou 100%), et lors du recalibrage.
+            Permet au volet d'atteindre la butee physique et de se
+            resynchroniser. Augmente si le volet n'atteint pas toujours
+            la position finale.
+          default: 5
+          selector:
+            number:
+              min: 0
+              max: 30
+              unit_of_measurement: secondes
+
         position_helper:
           name: Position actuelle (input_number)
           description: >
@@ -112,6 +127,7 @@ variables:
   position_helper: !input position_helper
   target_helper: !input target_helper
   travel_time: !input travel_time
+  extra_time: !input extra_time
 
 triggers:
   # Cible modifiee (slider, bouton ouvrir/fermer)
@@ -153,8 +169,8 @@ actions:
               current_pos: "{{ states(position_helper) | float(0) }}"
               target_pos: "{{ states(target_helper) | float(0) }}"
               distance: "{{ (target_pos - current_pos) | abs }}"
-              # Ajouter 5s de marge pour 0% et 100% (butee physique = recalibrage naturel)
-              margin: "{{ 5 if (target_pos <= 0 or target_pos >= 100) else 0 }}"
+              # Ajouter du temps supplementaire pour 0% et 100% (butee physique = recalibrage naturel)
+              margin: "{{ extra_time | int if (target_pos <= 0 or target_pos >= 100) else 0 }}"
               duration: "{{ ((distance / 100 * (travel_time | float)) | round(0) | int) + (margin | int) }}"
               direction: "{{ 'open' if target_pos > current_pos else 'close' }}"
               step_per_sec: "{{ 100 / (travel_time | float) }}"
@@ -238,9 +254,9 @@ actions:
             target:
               entity_id: !input cover_entity
 
-          # Attendre le temps de course complet + marge de butee
+          # Attendre le temps de course complet + temps supplementaire de butee
           - delay:
-              seconds: "{{ (travel_time | int) + 5 }}"
+              seconds: "{{ (travel_time | int) + (extra_time | int) }}"
 
           # Stopper et finaliser a 0%
           - action: cover.stop_cover
