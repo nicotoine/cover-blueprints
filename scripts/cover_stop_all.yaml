@@ -1,0 +1,32 @@
+# ============================================================================
+# SCRIPT : Arreter tous les volets (compatible Alexa)
+# ============================================================================
+# A ajouter dans configuration.yaml :
+#   script: !include_dir_merge_named scripts/
+# Ou copier le contenu dans la section "script:" existante.
+#
+# Expose le script a Alexa via l'integration HA Cloud ou Emulated Hue.
+# "Alexa, active arreter les volets"
+#
+# Fonctionne en appuyant sur les boutons stop de chaque volet,
+# ce qui declenche le blueprint (mode: restart) et garantit la
+# synchro position / cible.
+# ============================================================================
+
+cover_stop_all:
+  alias: "Arreter les volets"
+  description: >
+    Arrete tous les volets en mouvement en appuyant sur leurs boutons
+    stop respectifs. La position et la cible restent synchronisees.
+  icon: mdi:window-shutter-alert
+  sequence:
+    - action: input_button.press
+      target:
+        entity_id:
+          # Ajouter ici les boutons stop de chaque volet
+          # ex:
+          # - input_button.stop_volet_cuisine
+          # - input_button.stop_volet_salon
+          # - input_button.stop_volet_chambre
+          - input_button.stop_volet_1
+  mode: single

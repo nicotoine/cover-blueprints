@@ -1,0 +1,258 @@
+# ============================================================================
+# BLUEPRINT : Controle de volet par position estimee
+# ============================================================================
+# Toutes les commandes passent par les helpers :
+#   - Ouvrir  : mettre la cible a 100
+#   - Fermer  : mettre la cible a 0
+#   - Stop    : appuyer sur le bouton stop
+#   - Slider  : changer la cible a la valeur souhaitee
+#
+# Le blueprint gere le mouvement reel et la position en temps reel.
+# Pas besoin de template cover dans configuration.yaml.
+#
+# Prerequis (par volet) :
+#   - input_number "position" (min: 0, max: 100, pas: 1)
+#   - input_number "cible" (min: 0, max: 100, pas: 1)
+#   - input_button "stop" (un par volet)
+#   - input_button "synchro" (partage possible)
+# ============================================================================
+
+blueprint:
+  name: "Volet - Controle par position estimee"
+  description: >
+    Controle un volet sans retour de position en estimant sa position
+    par le temps de course. Pilotez via le slider cible, ou avec
+    des boutons qui mettent la cible a 100 (ouvrir) ou 0 (fermer).
+    0% = ferme, 100% = ouvert.
+  domain: automation
+
+  input:
+    volet:
+      name: Volet
+      collapsed: false
+      input:
+        cover_entity:
+          name: Volet reel
+          description: >
+            L'entite cover du volet (ex: cover.volet_cuisine).
+          selector:
+            entity:
+              filter:
+                - domain: cover
+
+        travel_time:
+          name: Temps de course complet (secondes)
+          description: >
+            Duree pour une ouverture ou fermeture complete.
+            Verifie dans l'entite number.xxx_time_control.
+          default: 70
+          selector:
+            number:
+              min: 10
+              max: 300
+              unit_of_measurement: secondes
+
+        position_helper:
+          name: Position actuelle (input_number)
+          description: >
+            input_number (0-100, pas 1). Mis a jour automatiquement.
+          selector:
+            entity:
+              filter:
+                - domain: input_number
+
+        target_helper:
+          name: Position cible (input_number)
+          description: >
+            input_number (0-100, pas 1). Slider de controle.
+          selector:
+            entity:
+              filter:
+                - domain: input_number
+
+    controle:
+      name: Controle
+      collapsed: false
+      input:
+        stop_button:
+          name: Bouton stop (input_button)
+          description: >
+            Arrete le volet et sauvegarde la position actuelle.
+            Un par volet.
+          selector:
+            entity:
+              filter:
+                - domain: input_button
+
+    synchro:
+      name: Synchronisation
+      collapsed: true
+      input:
+        alarm_entity:
+          name: Panneau d'alarme (Alarmo)
+          description: Recalibrage automatique au passage en mode nuit.
+          selector:
+            entity:
+              filter:
+                - domain: alarm_control_panel
+
+        sync_button:
+          name: Bouton de recalibrage (input_button)
+          description: >
+            Ferme le volet completement et remet la position a 0%.
+          selector:
+            entity:
+              filter:
+                - domain: input_button
+
+mode: restart
+
+variables:
+  cover_id: !input cover_entity
+  position_helper: !input position_helper
+  target_helper: !input target_helper
+  travel_time: !input travel_time
+
+triggers:
+  # Cible modifiee (slider, bouton ouvrir/fermer)
+  - trigger: state
+    entity_id: !input target_helper
+    id: "target_changed"
+
+  # Bouton stop
+  - trigger: state
+    entity_id: !input stop_button
+    id: "stop_pressed"
+
+  # Alarmo mode nuit -> recalibrage
+  - trigger: state
+    entity_id: !input alarm_entity
+    to: "armed_night"
+    id: "night_recalib"
+
+  # Bouton recalibrage
+  - trigger: state
+    entity_id: !input sync_button
+    id: "manual_recalib"
+
+actions:
+  - choose:
+      # --- Deplacement vers la cible ---
+      - conditions:
+          - condition: trigger
+            id: "target_changed"
+        sequence:
+          # Stopper tout mouvement en cours
+          - action: cover.stop_cover
+            target:
+              entity_id: !input cover_entity
+          - delay: 1
+
+          # Calculer le mouvement
+          - variables:
+              current_pos: "{{ states(position_helper) | float(0) }}"
+              target_pos: "{{ states(target_helper) | float(0) }}"
+              distance: "{{ (target_pos - current_pos) | abs }}"
+              # Ajouter 5s de marge pour 0% et 100% (butee physique = recalibrage naturel)
+              margin: "{{ 5 if (target_pos <= 0 or target_pos >= 100) else 0 }}"
+              duration: "{{ ((distance / 100 * (travel_time | float)) | round(0) | int) + (margin | int) }}"
+              direction: "{{ 'open' if target_pos > current_pos else 'close' }}"
+              step_per_sec: "{{ 100 / (travel_time | float) }}"
+
+          # Rien a faire si deja a la bonne position
+          - condition: template
+            value_template: "{{ duration > 0 }}"
+
+          # Lancer le mouvement
+          - if:
+              - condition: template
+                value_template: "{{ direction == 'open' }}"
+            then:
+              - action: cover.open_cover
+                target:
+                  entity_id: !input cover_entity
+            else:
+              - action: cover.close_cover
+                target:
+                  entity_id: !input cover_entity
+
+          # Mise a jour en temps reel chaque seconde
+          - repeat:
+              count: "{{ duration }}"
+              sequence:
+                - delay: 1
+                - action: input_number.set_value
+                  target:
+                    entity_id: !input position_helper
+                  data:
+                    value: >
+                      {% if direction == 'open' %}
+                        {{ [100, ((current_pos + step_per_sec * repeat.index) | round(0))] | min }}
+                      {% else %}
+                        {{ [0, ((current_pos - step_per_sec * repeat.index) | round(0))] | max }}
+                      {% endif %}
+
+          # Arreter et finaliser
+          - action: cover.stop_cover
+            target:
+              entity_id: !input cover_entity
+          - action: input_number.set_value
+            target:
+              entity_id: !input position_helper
+            data:
+              value: "{{ target_pos | round(0) }}"
+
+      # --- Stop : arreter et sauvegarder la position ---
+      - conditions:
+          - condition: trigger
+            id: "stop_pressed"
+        sequence:
+          - action: cover.stop_cover
+            target:
+              entity_id: !input cover_entity
+          - action: input_number.set_value
+            target:
+              entity_id: !input target_helper
+            data:
+              value: "{{ states(position_helper) | float(0) | round(0) }}"
+
+      # --- Recalibrage (nuit ou manuel) ---
+      # Ferme le volet completement sur tout le temps de course
+      # puis remet position et cible a 0%
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: "night_recalib"
+              - condition: trigger
+                id: "manual_recalib"
+        sequence:
+          # Stopper tout mouvement en cours
+          - action: cover.stop_cover
+            target:
+              entity_id: !input cover_entity
+          - delay: 1
+
+          # Fermer le volet directement
+          - action: cover.close_cover
+            target:
+              entity_id: !input cover_entity
+
+          # Attendre le temps de course complet + marge de butee
+          - delay:
+              seconds: "{{ (travel_time | int) + 5 }}"
+
+          # Stopper et finaliser a 0%
+          - action: cover.stop_cover
+            target:
+              entity_id: !input cover_entity
+          - action: input_number.set_value
+            target:
+              entity_id: !input position_helper
+            data:
+              value: 0
+          - action: input_number.set_value
+            target:
+              entity_id: !input target_helper
+            data:
+              value: 0

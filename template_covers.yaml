@@ -1,0 +1,71 @@
+# ============================================================================
+# Template covers pour integration Alexa (syntaxe moderne)
+# ============================================================================
+# Ces covers virtuels font le pont entre Alexa et les helpers du blueprint.
+# Alexa controle ces covers, qui mettent a jour les input_number cibles,
+# et le blueprint gere le mouvement reel.
+#
+# Installation :
+#   Ajouter dans configuration.yaml :
+#     template: !include template_covers.yaml
+#
+#   Si tu as deja une section template:, copie le contenu (sans la
+#   premiere ligne "- cover:") dans ta section existante.
+#
+#   Puis : Outils de developpement > YAML > Recharger les entites template
+#
+# Expose ensuite ces covers a Alexa (pas les cover.volet_* originaux).
+# ============================================================================
+
+- cover:
+    - name: Volet Cuisine
+      unique_id: volet_cuisine_alexa
+      position: "{{ states('input_number.position_volet_cuisine') | int(0) }}"
+      set_cover_position:
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.position_cible_volet_cuisine
+          data:
+            value: "{{ position }}"
+      open_cover:
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.position_cible_volet_cuisine
+          data:
+            value: 100
+      close_cover:
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.position_cible_volet_cuisine
+          data:
+            value: 0
+      stop_cover:
+        - action: input_button.press
+          target:
+            entity_id: input_button.stop_cover_button
+
+    - name: Volet Salon
+      unique_id: volet_salon_alexa
+      position: "{{ states('input_number.position_volet_salon') | int(0) }}"
+      set_cover_position:
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.position_cible_volet_salon
+          data:
+            value: "{{ position }}"
+      open_cover:
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.position_cible_volet_salon
+          data:
+            value: 100
+      close_cover:
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.position_cible_volet_salon
+          data:
+            value: 0
+      stop_cover:
+        - action: input_button.press
+          target:
+            entity_id: input_button.stop_cover_salon_button
