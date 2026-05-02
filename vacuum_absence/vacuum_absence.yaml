@@ -198,10 +198,19 @@ actions:
             then: !input mop_actions
             else: !input vacuum_only_actions
 
-          # Met à jour le tracker si lavage effectué
+          # Attend que le robot démarre réellement (confirmation avant mise à jour du tracker)
+          - wait_for_trigger:
+              - trigger: state
+                entity_id: !input vacuum_entity
+                to: "cleaning"
+            timeout:
+              minutes: 3
+            continue_on_timeout: true
+
+          # Met à jour le tracker uniquement si le robot a bien démarré
           - if:
               - condition: template
-                value_template: "{{ needs_mop }}"
+                value_template: "{{ needs_mop and wait.completed }}"
             then:
               - action: input_datetime.set_datetime
                 target:

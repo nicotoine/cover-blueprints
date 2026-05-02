@@ -14,6 +14,14 @@ blueprint:
   domain: automation
 
   input:
+    vacuum_entity:
+      name: Aspirateur Roborock
+      description: Utilisé pour confirmer que le robot démarre bien avant de valider le tracker.
+      selector:
+        entity:
+          filter:
+            - domain: vacuum
+
     vacuum_only_actions:
       name: Actions aspiration seule
       description: >
@@ -87,10 +95,25 @@ actions:
     then: !input mop_actions
     else: !input vacuum_only_actions
 
-  # Met à jour le tracker si lavage effectué
+  # Attend que le robot démarre réellement
+  - wait_for_trigger:
+      - trigger: state
+        entity_id: !input vacuum_entity
+        to: "cleaning"
+    timeout:
+      minutes: 3
+    continue_on_timeout: true
+
+  # Log du résultat du wait
+  - action: system_log.write
+    data:
+      message: "[TEST VACUUM] wait.completed={{ wait.completed }} | tracker sera mis à jour: {{ needs_mop and wait.completed }}"
+      level: warning
+
+  # Met à jour le tracker uniquement si le robot a bien démarré
   - if:
       - condition: template
-        value_template: "{{ needs_mop }}"
+        value_template: "{{ needs_mop and wait.completed }}"
     then:
       - action: input_datetime.set_datetime
         target:

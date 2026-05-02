@@ -208,17 +208,34 @@ actions:
         - segments: "{{ room_ids_list }}"
           repeat: !input repeat_count
 
-  # Met à jour le tracker
-  - action: input_datetime.set_datetime
-    target:
-      entity_id: !input last_clean_tracker
-    data:
-      datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+  # Attend que le robot démarre réellement avant de valider le tracker
+  - wait_for_trigger:
+      - trigger: state
+        entity_id: !input vacuum_entity
+        to: "cleaning"
+    timeout:
+      minutes: 3
+    continue_on_timeout: true
 
-  # Notification
-  - action: "{{ notification_service }}"
-    data:
-      title: "Aspirateur"
-      message: >
-        Nettoyage {{ 'complet (aspiro + lavage)' if do_mop else 'automatique' }}
-        lancé — dernier passage il y a plus de {{ days }} jours.
+  # Met à jour le tracker uniquement si le robot a bien démarré
+  - if:
+      - condition: template
+        value_template: "{{ wait.completed }}"
+    then:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: !input last_clean_tracker
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+  # Notification (seulement si le robot a bien démarré)
+  - if:
+      - condition: template
+        value_template: "{{ wait.completed }}"
+    then:
+      - action: "{{ notification_service }}"
+        data:
+          title: "Aspirateur"
+          message: >
+            Nettoyage {{ 'complet (aspiro + lavage)' if do_mop else 'automatique' }}
+            lancé — dernier passage il y a plus de {{ days }} jours.
