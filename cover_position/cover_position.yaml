@@ -40,6 +40,16 @@ blueprint:
               filter:
                 - domain: cover
 
+        invert_motor:
+          name: Inverser le sens du moteur
+          description: >
+            Activer si "ouvrir" ferme physiquement le volet (ex: Tuya local
+            avec moteur inverse). Echange les commandes open/close envoyees
+            au volet reel sans changer la convention 0%=ferme / 100%=ouvert.
+          default: false
+          selector:
+            boolean:
+
         travel_time:
           name: Temps de course complet (secondes)
           description: >
@@ -128,6 +138,7 @@ variables:
   target_helper: !input target_helper
   travel_time: !input travel_time
   extra_time: !input extra_time
+  invert_motor: !input invert_motor
 
 triggers:
   # Cible modifiee (slider, bouton ouvrir/fermer)
@@ -182,7 +193,7 @@ actions:
           # Lancer le mouvement
           - if:
               - condition: template
-                value_template: "{{ direction == 'open' }}"
+                value_template: "{{ (direction == 'open') != (invert_motor | bool) }}"
             then:
               - action: cover.open_cover
                 target:
@@ -250,9 +261,17 @@ actions:
           - delay: 1
 
           # Fermer le volet directement
-          - action: cover.close_cover
-            target:
-              entity_id: !input cover_entity
+          - if:
+              - condition: template
+                value_template: "{{ not (invert_motor | bool) }}"
+            then:
+              - action: cover.close_cover
+                target:
+                  entity_id: !input cover_entity
+            else:
+              - action: cover.open_cover
+                target:
+                  entity_id: !input cover_entity
 
           # Attendre le temps de course complet + temps supplementaire de butee
           - delay:
