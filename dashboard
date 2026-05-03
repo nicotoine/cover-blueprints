@@ -336,6 +336,8 @@ views:
                       %}{{ inv }}%{% endif %}
                     show_name: true
                     show_background: false
+      - type: grid
+        cards:
           - type: custom:bubble-card
             card_type: pop-up
             hash: '#volet-salon'
