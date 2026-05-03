@@ -1,0 +1,1753 @@
+views:
+  - title: Accueil
+    path: accueil
+    icon: mdi:home
+    type: sections
+    max_columns: 4
+    sections:
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: La maison
+            icon: mdi:home-heart
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: person.jouy_le_potier
+            name: Nico
+            sub_button:
+              - entity: sensor.sm_s931u_battery_level
+                show_state: true
+                show_icon: true
+              - entity: sensor.sm_s931u_detected_activity
+                show_state: true
+                show_icon: true
+            tap_action:
+              action: more-info
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: person.perrine
+            name: Perrine
+            sub_button:
+              - entity: sensor.tel_perrine_battery_level
+                show_state: true
+                show_icon: true
+              - entity: sensor.tel_perrine_detected_activity
+                show_state: true
+                show_icon: true
+            tap_action:
+              action: more-info
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Meteo
+            icon: mdi:weather-partly-cloudy
+          - type: weather-forecast
+            entity: weather.forecast_maison
+            forecast_type: daily
+            show_current: true
+            show_forecast: true
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Lever
+                secondary: >-
+                  {{ as_timestamp(states('sensor.sun_next_rising')) |
+                  timestamp_custom('%H:%M') }}
+                icon: mdi:weather-sunset-up
+                icon_color: orange
+              - type: custom:mushroom-template-card
+                primary: Coucher
+                secondary: >-
+                  {{ as_timestamp(states('sensor.sun_next_setting')) |
+                  timestamp_custom('%H:%M') }}
+                icon: mdi:weather-sunset-down
+                icon_color: deep-orange
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Securite
+            icon: mdi:shield-home
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: alarm_control_panel.alarmo
+            name: Alarme
+            tap_action:
+              action: more-info
+            sub_button:
+              - icon: mdi:shield-home
+                tap_action:
+                  action: call-service
+                  service: alarm_control_panel.alarm_arm_home
+                  service_data:
+                    entity_id: alarm_control_panel.alarmo
+                show_background: false
+              - icon: mdi:shield-lock
+                tap_action:
+                  action: call-service
+                  service: alarm_control_panel.alarm_arm_away
+                  service_data:
+                    entity_id: alarm_control_panel.alarmo
+                show_background: false
+              - icon: mdi:shield-moon
+                tap_action:
+                  action: call-service
+                  service: alarm_control_panel.alarm_arm_night
+                  service_data:
+                    entity_id: alarm_control_panel.alarmo
+                show_background: false
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: cover.portail
+            name: Portail
+            icon: mdi:gate
+            tap_action:
+              action: call-service
+              service: script.turn_on
+              service_data:
+                entity_id: script.ouverture_du_portail
+          - type: custom:mushroom-template-card
+            primary: Ouvertures
+            secondary: >-
+              {% set entities = [
+                'binary_sensor.0xa4c138b788944b2b_contact',
+                'binary_sensor.0xa4c138664b1bac82_contact',
+                'binary_sensor.0xa4c13893a6f5b9b7_contact',
+                'binary_sensor.0xa4c138b35ca17149_contact',
+                'binary_sensor.0xa4c1387e3f595605_contact',
+                'binary_sensor.0xa4c13828f794482c_contact',
+                'binary_sensor.0xa4c138ef24f410e9_contact',
+                'binary_sensor.0xa4c1388740e7ca6c_contact',
+                'binary_sensor.0xa4c138e4a8e7b49f_contact',
+                'binary_sensor.capteur_porte_d_entree_porte',
+                'binary_sensor.baie_vitree_droite_porte',
+                'binary_sensor.baie_vitree_gauche_porte',
+                'binary_sensor.capteur_salle_de_bain_porte'
+              ] %} {% set ouvertes = entities | select('is_state', 'on') | list
+              | count %} {% if ouvertes == 0 %}Tout est ferme {% else %}{{
+              ouvertes }} ouverte(s){% endif %}
+            icon: >-
+              {% set entities = [
+                'binary_sensor.0xa4c138b788944b2b_contact',
+                'binary_sensor.0xa4c138664b1bac82_contact',
+                'binary_sensor.0xa4c13893a6f5b9b7_contact',
+                'binary_sensor.0xa4c138b35ca17149_contact',
+                'binary_sensor.0xa4c1387e3f595605_contact',
+                'binary_sensor.0xa4c13828f794482c_contact',
+                'binary_sensor.0xa4c138ef24f410e9_contact',
+                'binary_sensor.0xa4c1388740e7ca6c_contact',
+                'binary_sensor.0xa4c138e4a8e7b49f_contact'
+              ] %} {% set ouvertes = entities | select('is_state', 'on') | list
+              | count %} {% if ouvertes == 0 %}mdi:door-closed-lock {% else
+              %}mdi:door-open{% endif %}
+            icon_color: >-
+              {% set entities = [
+                'binary_sensor.0xa4c138b788944b2b_contact',
+                'binary_sensor.0xa4c138664b1bac82_contact',
+                'binary_sensor.0xa4c13893a6f5b9b7_contact',
+                'binary_sensor.0xa4c138b35ca17149_contact',
+                'binary_sensor.0xa4c1387e3f595605_contact',
+                'binary_sensor.0xa4c13828f794482c_contact',
+                'binary_sensor.0xa4c138ef24f410e9_contact',
+                'binary_sensor.0xa4c1388740e7ca6c_contact',
+                'binary_sensor.0xa4c138e4a8e7b49f_contact'
+              ] %} {% set ouvertes = entities | select('is_state', 'on') | list
+              | count %} {% if ouvertes == 0 %}green {% else %}orange{% endif %}
+            tap_action:
+              action: navigate
+              navigation_path: /lovelace/securite
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Climat
+            icon: mdi:thermometer
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: RDC
+                secondary: >-
+                  {{ states('sensor.0xa4c138503fcc929f_temperature') }}C - {{
+                  states('sensor.0xa4c138503fcc929f_humidity') }}%
+                icon: mdi:home-floor-g
+                icon_color: >-
+                  {% set t = states('sensor.0xa4c138503fcc929f_temperature') |
+                  float(0) %} {% if t < 18 %}blue {% elif t < 22 %}green {% elif
+                  t < 26 %}orange {% else %}red{% endif %}
+              - type: custom:mushroom-template-card
+                primary: Etage
+                secondary: >-
+                  {{ states('sensor.captor_temperature_step_1') }}C - {{
+                  states('sensor.captor_humidity_step_1') }}%
+                icon: mdi:home-floor-1
+                icon_color: >-
+                  {% set t = states('sensor.captor_temperature_step_1') |
+                  float(0) %} {% if t < 18 %}blue {% elif t < 22 %}green {% elif
+                  t < 26 %}orange {% else %}red{% endif %}
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Chambre parents
+                secondary: >-
+                  {{
+                  states('sensor.capteur_de_temperature_et_d_humidite_temperature')
+                  }}C - {{
+                  states('sensor.capteur_de_temperature_et_d_humidite_humidite')
+                  }}%
+                icon: mdi:bed
+                icon_color: >-
+                  {% set t =
+                  states('sensor.capteur_de_temperature_et_d_humidite_temperature')
+                  | float(0) %} {% if t < 18 %}blue {% elif t < 22 %}green {%
+                  elif t < 26 %}orange {% else %}red{% endif %}
+              - type: custom:mushroom-template-card
+                primary: Chambre Jeanne
+                secondary: >-
+                  {{ states('sensor.0xa4c13821bc3bee42_temperature') }}C - {{
+                  states('sensor.0xa4c13821bc3bee42_humidity') }}%
+                icon: mdi:baby-face
+                icon_color: >-
+                  {% set t = states('sensor.0xa4c13821bc3bee42_temperature') |
+                  float(0) %} {% if t < 18 %}blue {% elif t < 22 %}green {% elif
+                  t < 26 %}orange {% else %}red{% endif %}
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Lumieres
+            icon: mdi:lightbulb-group
+            sub_button:
+              - icon: mdi:lightbulb-off
+                tap_action:
+                  action: call-service
+                  service: light.turn_off
+                  service_data:
+                    entity_id:
+                      - light.lumiere_salon
+                      - light.lumiere_cuisine
+                      - light.lumiere_salle_a_manger
+                      - light.lumiere_chambre_interrupteur_1
+                      - light.lumiere_chambre_interrupteur_2
+                      - light.lumiere_bureau
+                      - light.lumieres_salle_de_bain_interrupteur_1
+                      - light.lumieres_salle_de_bain_interrupteur_2
+                      - light.lumieres_entree_interrupteur_1
+                      - light.lumieres_entree_interrupteur_2
+                      - light.lumiere_jardin
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_salon
+            name: Salon
+            tap_action:
+              action: toggle
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_cuisine
+            name: Cuisine
+            tap_action:
+              action: toggle
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_salle_a_manger
+            name: Salle a manger
+            tap_action:
+              action: toggle
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_chambre_interrupteur_1
+            name: Chambre
+            tap_action:
+              action: toggle
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_bureau
+            name: Bureau
+            tap_action:
+              action: toggle
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_jardin
+            name: Jardin
+            tap_action:
+              action: toggle
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Volets
+            icon: mdi:window-shutter
+          - type: horizontal-stack
+            cards:
+              - type: custom:bubble-card
+                card_type: button
+                button_type: state
+                entity: cover.volet_salon_2
+                name: Salon
+                icon: mdi:window-shutter
+                show_state: false
+                show_last_changed: false
+                tap_action:
+                  action: navigate
+                  navigation_path: '#volet-salon'
+                styles: |
+                  .bubble-sub-button-name {
+                    font-weight: bold !important;
+                  }
+                sub_button:
+                  - name_template: >-
+                      {% set p = state_attr('cover.volet_salon_2',
+                      'current_position') | int(0) %} {% set inv = 100 - p %} {%
+                      if inv == 0 %}Ferme {% elif inv == 100 %}Ouvert {% else
+                      %}{{ inv }}%{% endif %}
+                    show_name: true
+                    show_background: false
+              - type: custom:bubble-card
+                card_type: button
+                button_type: state
+                entity: cover.volet_cuisine_3
+                name: Cuisine
+                icon: mdi:window-shutter
+                show_state: false
+                show_last_changed: false
+                tap_action:
+                  action: navigate
+                  navigation_path: '#volet-cuisine'
+                styles: |
+                  .bubble-sub-button-name {
+                    font-weight: bold !important;
+                  }
+                sub_button:
+                  - name_template: >-
+                      {% set p = state_attr('cover.volet_cuisine_3',
+                      'current_position') | int(0) %} {% set inv = 100 - p %} {%
+                      if inv == 0 %}Ferme {% elif inv == 100 %}Ouvert {% else
+                      %}{{ inv }}%{% endif %}
+                    show_name: true
+                    show_background: false
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: '#volet-salon'
+            name: Volet Salon
+            icon: mdi:window-shutter
+            entity: cover.volet_salon_2
+            show_header: true
+            close_on_click: false
+            auto_close: 60000
+            margin_top_mobile: '-56px'
+            margin_top_desktop: 0px
+            sub_button:
+              - icon: mdi:arrow-up-bold
+                tap_action:
+                  action: call-service
+                  service: input_number.set_value
+                  service_data:
+                    entity_id: input_number.position_cible_volet_salon
+                    value: 100
+                show_background: true
+              - icon: mdi:pause
+                tap_action:
+                  action: call-service
+                  service: input_button.press
+                  service_data:
+                    entity_id: input_button.stop_cover_salon_button
+                show_background: true
+              - icon: mdi:arrow-down-bold
+                tap_action:
+                  action: call-service
+                  service: input_number.set_value
+                  service_data:
+                    entity_id: input_number.position_cible_volet_salon
+                    value: 0
+                show_background: true
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Position estimee
+                    secondary: >-
+                      {{ states('input_number.position_volet_salon') | int }}%
+                      (0=ferme, 100=ouvert)
+                    icon: mdi:format-vertical-align-center
+                    icon_color: blue
+                    fill_container: true
+                  - type: entities
+                    entities:
+                      - entity: input_number.position_cible_volet_salon
+                        name: Position cible
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: 0%
+                        secondary: Ferme
+                        icon: mdi:window-shutter
+                        icon_color: grey
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_salon
+                            value: 0
+                      - type: custom:mushroom-template-card
+                        primary: 25%
+                        icon: mdi:window-shutter
+                        icon_color: blue-grey
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_salon
+                            value: 25
+                      - type: custom:mushroom-template-card
+                        primary: 50%
+                        icon: mdi:window-shutter-open
+                        icon_color: blue
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_salon
+                            value: 50
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: 75%
+                        icon: mdi:window-shutter-open
+                        icon_color: orange
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_salon
+                            value: 75
+                      - type: custom:mushroom-template-card
+                        primary: 100%
+                        secondary: Ouvert
+                        icon: mdi:window-shutter-open
+                        icon_color: green
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_salon
+                            value: 100
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: '#volet-cuisine'
+            name: Volet Cuisine
+            icon: mdi:window-shutter
+            entity: cover.volet_cuisine_3
+            show_header: true
+            close_on_click: false
+            auto_close: 60000
+            margin_top_mobile: '-56px'
+            margin_top_desktop: 0px
+            sub_button:
+              - icon: mdi:arrow-up-bold
+                tap_action:
+                  action: call-service
+                  service: input_number.set_value
+                  service_data:
+                    entity_id: input_number.position_cible_volet_cuisine
+                    value: 100
+                show_background: true
+              - icon: mdi:pause
+                tap_action:
+                  action: call-service
+                  service: input_button.press
+                  service_data:
+                    entity_id: input_button.stop_cover_button
+                show_background: true
+              - icon: mdi:arrow-down-bold
+                tap_action:
+                  action: call-service
+                  service: input_number.set_value
+                  service_data:
+                    entity_id: input_number.position_cible_volet_cuisine
+                    value: 0
+                show_background: true
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Position estimee
+                    secondary: >-
+                      {{ states('input_number.position_volet_cuisine') | int }}%
+                      (0=ferme, 100=ouvert)
+                    icon: mdi:format-vertical-align-center
+                    icon_color: blue
+                    fill_container: true
+                  - type: entities
+                    entities:
+                      - entity: input_number.position_cible_volet_cuisine
+                        name: Position cible
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: 0%
+                        secondary: Ferme
+                        icon: mdi:window-shutter
+                        icon_color: grey
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_cuisine
+                            value: 0
+                      - type: custom:mushroom-template-card
+                        primary: 25%
+                        icon: mdi:window-shutter
+                        icon_color: blue-grey
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_cuisine
+                            value: 25
+                      - type: custom:mushroom-template-card
+                        primary: 50%
+                        icon: mdi:window-shutter-open
+                        icon_color: blue
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_cuisine
+                            value: 50
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: 75%
+                        icon: mdi:window-shutter-open
+                        icon_color: orange
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_cuisine
+                            value: 75
+                      - type: custom:mushroom-template-card
+                        primary: 100%
+                        secondary: Ouvert
+                        icon: mdi:window-shutter-open
+                        icon_color: green
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_cuisine
+                            value: 100
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Multimedia & Robot
+            icon: mdi:remote-tv
+          - type: custom:bubble-card
+            card_type: media-player
+            entity: media_player.televiseur_salon_2
+            name: TV Salon
+          - type: custom:bubble-card
+            card_type: media-player
+            entity: media_player.chambre
+            name: Chambre
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: vacuum.roborock_qv_35a
+            name: Roborock
+            sub_button:
+              - entity: sensor.roborock_qv_35a_batterie
+                show_state: true
+              - entity: sensor.roborock_qv_35a_etat
+                show_state: true
+            tap_action:
+              action: navigate
+              navigation_path: /lovelace/roborock
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Chat
+            icon: mdi:cat
+          - type: custom:mushroom-template-card
+            primary: Litiere
+            secondary: >-
+              {% set last =
+              as_timestamp(states('input_datetime.passage_litiere')) %} {% set
+              diff = (as_timestamp(now()) - last) / 3600 %} {% if diff < 1
+              %}Nettoyee il y a moins d'une heure {% elif diff < 24 %}Nettoyee
+              il y a {{ diff | int }}h {% else %}Nettoyee il y a {{ (diff / 24)
+              | int }}j{% endif %}
+            icon: mdi:cat
+            icon_color: >-
+              {% set last =
+              as_timestamp(states('input_datetime.passage_litiere')) %} {% set
+              diff = (as_timestamp(now()) - last) / 3600 %} {% if diff < 24
+              %}green {% elif diff < 48 %}orange {% else %}red{% endif %}
+            tap_action:
+              action: call-service
+              service: button.press
+              target:
+                entity_id: button.roborock_qv_35a_nettoyage_litiere
+  - title: Pieces
+    path: pieces
+    icon: mdi:floor-plan
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Salon - Salle a manger
+            icon: mdi:sofa
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_salon
+            name: Salon
+            tap_action:
+              action: toggle
+            double_tap_action:
+              action: more-info
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_salle_a_manger
+            name: Salle a manger
+            tap_action:
+              action: toggle
+            double_tap_action:
+              action: more-info
+          - type: custom:bubble-card
+            card_type: cover
+            entity: cover.volet_salon_2
+            name: Volet Salon
+          - type: custom:mushroom-template-card
+            primary: RDC
+            secondary: >-
+              {{ states('sensor.0xa4c138503fcc929f_temperature') }}C - {{
+              states('sensor.0xa4c138503fcc929f_humidity') }}% humidite
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.0xa4c138503fcc929f_temperature') |
+              float(0) %} {% if t < 18 %}blue {% elif t < 22 %}green {% elif t <
+              26 %}orange {% else %}red{% endif %}
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Cuisine
+            icon: mdi:silverware-fork-knife
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_cuisine
+            name: Plafonnier
+            tap_action:
+              action: toggle
+          - type: custom:bubble-card
+            card_type: cover
+            entity: cover.volet_cuisine_3
+            name: Volet Cuisine
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Bureau
+            icon: mdi:desk
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_bureau
+            name: Bureau
+            tap_action:
+              action: toggle
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Chambre parents
+            icon: mdi:bed
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_chambre_interrupteur_1
+            name: Luminaire
+            tap_action:
+              action: toggle
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_chambre_interrupteur_2
+            name: Spot
+            tap_action:
+              action: toggle
+          - type: custom:bubble-card
+            card_type: media-player
+            entity: media_player.chambre
+            name: Chambre
+          - type: custom:mushroom-template-card
+            primary: Chambre parents
+            secondary: >-
+              {{
+              states('sensor.capteur_de_temperature_et_d_humidite_temperature')
+              }}C - {{
+              states('sensor.capteur_de_temperature_et_d_humidite_humidite') }}%
+              humidite
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t =
+              states('sensor.capteur_de_temperature_et_d_humidite_temperature')
+              | float(0) %} {% if t < 18 %}blue {% elif t < 22 %}green {% elif t
+              < 26 %}orange {% else %}red{% endif %}
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Chambre Jeanne
+            icon: mdi:baby-face
+          - type: custom:mushroom-template-card
+            primary: Chambre Jeanne
+            secondary: >-
+              {{ states('sensor.0xa4c13821bc3bee42_temperature') }}C - {{
+              states('sensor.0xa4c13821bc3bee42_humidity') }}% humidite
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.0xa4c13821bc3bee42_temperature') |
+              float(0) %} {% if t < 18 %}blue {% elif t < 22 %}green {% elif t <
+              26 %}orange {% else %}red{% endif %}
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Salle de bain
+            icon: mdi:shower
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumieres_salle_de_bain_interrupteur_1
+            name: Lumiere 1
+            tap_action:
+              action: toggle
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumieres_salle_de_bain_interrupteur_2
+            name: Lumiere 2
+            tap_action:
+              action: toggle
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Etage
+            icon: mdi:home-floor-1
+          - type: custom:mushroom-template-card
+            primary: Palier etage
+            secondary: >-
+              {{ states('sensor.captor_temperature_step_1') }}C - {{
+              states('sensor.captor_humidity_step_1') }}% humidite
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.captor_temperature_step_1') | float(0)
+              %} {% if t < 18 %}blue {% elif t < 22 %}green {% elif t < 26
+              %}orange {% else %}red{% endif %}
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Entree et Exterieur
+            icon: mdi:door
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumieres_entree_interrupteur_1
+            name: Entree exterieur
+            tap_action:
+              action: toggle
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumieres_entree_interrupteur_2
+            name: Entree interieur
+            tap_action:
+              action: toggle
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: light.lumiere_jardin
+            name: Jardin
+            tap_action:
+              action: toggle
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Historique climat
+            icon: mdi:chart-line
+          - type: custom:mini-graph-card
+            name: Temperatures 24h
+            hours_to_show: 24
+            points_per_hour: 2
+            line_width: 2
+            entities:
+              - entity: sensor.0xa4c138503fcc929f_temperature
+                name: RDC
+              - entity: sensor.captor_temperature_step_1
+                name: Etage
+              - entity: sensor.capteur_de_temperature_et_d_humidite_temperature
+                name: Chambre
+              - entity: sensor.0xa4c13821bc3bee42_temperature
+                name: Jeanne
+          - type: custom:mini-graph-card
+            name: Humidite 24h
+            hours_to_show: 24
+            points_per_hour: 2
+            line_width: 2
+            entities:
+              - entity: sensor.0xa4c138503fcc929f_humidity
+                name: RDC
+              - entity: sensor.captor_humidity_step_1
+                name: Etage
+              - entity: sensor.capteur_de_temperature_et_d_humidite_humidite
+                name: Chambre
+              - entity: sensor.0xa4c13821bc3bee42_humidity
+                name: Jeanne
+  - title: Securite
+    path: securite
+    icon: mdi:shield-home
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Alarme
+            icon: mdi:shield-lock
+          - type: alarm-panel
+            entity: alarm_control_panel.alarmo
+            states:
+              - arm_home
+              - arm_away
+              - arm_night
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: siren.alarme_alarm
+            name: Sirene
+            icon: mdi:alarm-light
+            tap_action:
+              action: toggle
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Cameras
+            icon: mdi:cctv
+          - type: picture-entity
+            entity: camera.sonnette_portail_live_view
+            camera_view: live
+            show_state: false
+            name: Sonnette portail
+          - type: picture-entity
+            entity: camera.salon_hd_stream
+            camera_view: live
+            show_state: false
+            name: Salon
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-entity-card
+                entity: sensor.sonnette_portail_batterie
+                name: Batterie sonnette
+                icon: mdi:battery
+              - type: custom:mushroom-entity-card
+                entity: switch.sonnette_portail_motion_detection
+                name: Detection
+                icon: mdi:motion-sensor
+                tap_action:
+                  action: toggle
+          - type: custom:mushroom-template-card
+            primary: Detection presence salon
+            secondary: >-
+              {% if is_state('binary_sensor.salon_person_detection', 'on')
+              %}Personne detectee {% else %}Aucune presence{% endif %}
+            icon: mdi:account-search
+            icon_color: >-
+              {% if is_state('binary_sensor.salon_person_detection', 'on') %}red
+              {% else %}grey{% endif %}
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Portes et Fenetres RDC
+            icon: mdi:door-open
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.0xa4c138b35ca17149_contact
+                name: Porte d'entree
+              - entity: binary_sensor.0xa4c138b788944b2b_contact
+                name: Fenetre cuisine gauche
+              - entity: binary_sensor.0xa4c138664b1bac82_contact
+                name: Fenetre cuisine droite
+              - entity: binary_sensor.0xa4c13893a6f5b9b7_contact
+                name: Fenetre salon
+              - entity: binary_sensor.0xa4c1387e3f595605_contact
+                name: Fenetre bureau
+              - entity: binary_sensor.0xa4c13828f794482c_contact
+                name: Baie vitree droite
+              - entity: binary_sensor.0xa4c138ef24f410e9_contact
+                name: Baie vitree gauche
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Portes interieures
+            icon: mdi:door
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.0xa4c1388740e7ca6c_contact
+                name: Salle de bain
+              - entity: binary_sensor.0xa4c138e4a8e7b49f_contact
+                name: Chambre
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Velux
+            icon: mdi:window-open-variant
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.capteur_porte_d_entree_porte
+                name: Velux palier etage
+              - entity: binary_sensor.baie_vitree_droite_porte
+                name: Velux chambre etage
+              - entity: binary_sensor.baie_vitree_gauche_porte
+                name: Velux chambre Jeanne
+              - entity: binary_sensor.capteur_salle_de_bain_porte
+                name: Velux SDB etage
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Fumee et Gaz
+            icon: mdi:smoke-detector
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.0xa4c138e3f7c6b3f1_smoke
+                name: Cuisine
+              - entity: binary_sensor.0xa4c138e3b9a6426c_gas
+                name: Gaz cuisine
+              - entity: binary_sensor.0xa4c13898e1f71c18_smoke
+                name: Bureau
+              - entity: binary_sensor.0xa4c13858bdaaee12_smoke
+                name: Chambre
+              - entity: binary_sensor.0xa4c1384c7d7fec75_smoke
+                name: Chambre Jeanne
+              - entity: binary_sensor.0xa4c138f5d865a64a_smoke
+                name: Chambre etage
+              - entity: binary_sensor.0xa4c1384eab6d548c_smoke
+                name: Palier etage
+              - entity: binary_sensor.0xa4c13823591e19c8_smoke
+                name: SDB etage
+              - entity: binary_sensor.0xa4c1380f76d4740c_smoke
+                name: SDB RDC
+  - title: Volets
+    path: volets
+    icon: mdi:window-shutter
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Portail
+            icon: mdi:gate
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: cover.portail
+            name: Portail
+            icon: mdi:gate
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-entity-card
+            entity: script.ouverture_du_portail
+            name: Ouvrir le portail
+            icon: mdi:gate-open
+            tap_action:
+              action: call-service
+              service: script.turn_on
+              target:
+                entity_id: script.ouverture_du_portail
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Volet Salon
+            icon: mdi:window-shutter
+          - type: custom:bubble-card
+            card_type: cover
+            entity: cover.volet_salon_2
+            name: Volet Salon
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-entity-card
+                entity: script.ouvrir_volet_salon
+                name: Ouvrir
+                icon: mdi:arrow-up-bold
+                tap_action:
+                  action: call-service
+                  service: script.turn_on
+                  target:
+                    entity_id: script.ouvrir_volet_salon
+              - type: custom:mushroom-entity-card
+                entity: script.pause_volet_salon
+                name: Stop
+                icon: mdi:pause
+                tap_action:
+                  action: call-service
+                  service: script.turn_on
+                  target:
+                    entity_id: script.pause_volet_salon
+              - type: custom:mushroom-entity-card
+                entity: script.fermer_volet_salon
+                name: Fermer
+                icon: mdi:arrow-down-bold
+                tap_action:
+                  action: call-service
+                  service: script.turn_on
+                  target:
+                    entity_id: script.fermer_volet_salon
+          - type: custom:mushroom-template-card
+            primary: Position estimee
+            secondary: '{{ states(''input_number.position_volet_salon'') | int }}%'
+            icon: mdi:format-vertical-align-center
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Volet Cuisine
+            icon: mdi:window-shutter
+          - type: custom:bubble-card
+            card_type: cover
+            entity: cover.volet_cuisine_3
+            name: Volet Cuisine
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-entity-card
+                entity: script.alexa_ouvrir_volet_cuisine
+                name: Ouvrir
+                icon: mdi:arrow-up-bold
+                tap_action:
+                  action: call-service
+                  service: script.turn_on
+                  target:
+                    entity_id: script.alexa_ouvrir_volet_cuisine
+              - type: custom:mushroom-entity-card
+                entity: script.pause_volet_cuisine
+                name: Stop
+                icon: mdi:pause
+                tap_action:
+                  action: call-service
+                  service: script.turn_on
+                  target:
+                    entity_id: script.pause_volet_cuisine
+              - type: custom:mushroom-entity-card
+                entity: script.alexa_fermer_volet_cuisine
+                name: Fermer
+                icon: mdi:arrow-down-bold
+                tap_action:
+                  action: call-service
+                  service: script.turn_on
+                  target:
+                    entity_id: script.alexa_fermer_volet_cuisine
+          - type: custom:mushroom-template-card
+            primary: Position estimee
+            secondary: '{{ states(''input_number.position_volet_cuisine'') | int }}%'
+            icon: mdi:format-vertical-align-center
+  - title: Roborock
+    path: roborock
+    icon: mdi:robot-vacuum
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Statut
+            icon: mdi:robot-vacuum
+          - type: custom:bubble-card
+            card_type: button
+            button_type: state
+            entity: vacuum.roborock_qv_35a
+            name: Roborock QV 35A
+            sub_button:
+              - entity: sensor.roborock_qv_35a_batterie
+                show_state: true
+              - entity: sensor.roborock_qv_35a_etat
+                show_state: true
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Piece actuelle
+                secondary: '{{ states(''sensor.roborock_qv_35a_piece_actuelle'') }}'
+                icon: mdi:floor-plan
+              - type: custom:mushroom-template-card
+                primary: Erreur
+                secondary: '{{ states(''sensor.roborock_qv_35a_erreur_de_l_aspirateur'') }}'
+                icon: mdi:alert-circle
+                icon_color: >-
+                  {% if states('sensor.roborock_qv_35a_erreur_de_l_aspirateur')
+                  == 'none' %}green {% else %}red{% endif %}
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Carte
+            icon: mdi:map
+          - type: picture-entity
+            entity: image.roborock_qv_35a_map_0
+            show_state: false
+            show_name: false
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Actions
+            icon: mdi:gesture-tap
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-entity-card
+                entity: button.roborock_qv_35a_nettoyage_complet
+                name: Complet
+                icon: mdi:home-floor-a
+                tap_action:
+                  action: call-service
+                  service: button.press
+                  target:
+                    entity_id: button.roborock_qv_35a_nettoyage_complet
+              - type: custom:mushroom-entity-card
+                entity: button.roborock_qv_35a_aspiration_complete
+                name: Aspiration
+                icon: mdi:vacuum
+                tap_action:
+                  action: call-service
+                  service: button.press
+                  target:
+                    entity_id: button.roborock_qv_35a_aspiration_complete
+              - type: custom:mushroom-entity-card
+                entity: button.roborock_qv_35a_nettoyage_litiere
+                name: Litiere
+                icon: mdi:cat
+                tap_action:
+                  action: call-service
+                  service: button.press
+                  target:
+                    entity_id: button.roborock_qv_35a_nettoyage_litiere
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-entity-card
+                entity: vacuum.roborock_qv_35a
+                name: Pause
+                icon: mdi:pause
+                tap_action:
+                  action: call-service
+                  service: vacuum.pause
+                  target:
+                    entity_id: vacuum.roborock_qv_35a
+              - type: custom:mushroom-entity-card
+                entity: vacuum.roborock_qv_35a
+                name: Retour dock
+                icon: mdi:home-import-outline
+                tap_action:
+                  action: call-service
+                  service: vacuum.return_to_base
+                  target:
+                    entity_id: vacuum.roborock_qv_35a
+              - type: custom:mushroom-entity-card
+                entity: vacuum.roborock_qv_35a
+                name: Localiser
+                icon: mdi:map-marker
+                tap_action:
+                  action: call-service
+                  service: vacuum.locate
+                  target:
+                    entity_id: vacuum.roborock_qv_35a
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Reservoirs et serpilliere
+            icon: mdi:water
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.roborock_qv_35a_dock_clean_water_box
+                name: Reservoir eau propre
+              - entity: binary_sensor.roborock_qv_35a_dock_dirty_water_box
+                name: Reservoir eau sale
+              - entity: binary_sensor.roborock_qv_35a_penurie_d_eau
+                name: Penurie d'eau
+              - entity: binary_sensor.roborock_qv_35a_serpilliere_fixee
+                name: Serpilliere fixee
+              - entity: binary_sensor.roborock_qv_35a_dock_sechage_de_la_serpilliere
+                name: Sechage en cours
+              - entity: >-
+                  sensor.roborock_qv_35a_dock_temps_de_sechage_de_la_serpilliere_restant
+                name: Temps sechage restant
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Maintenance (heures restantes)
+            icon: mdi:wrench
+          - type: custom:mini-graph-card
+            name: Brosse principale
+            entities:
+              - sensor.roborock_qv_35a_temps_restant_brosse_principale
+            hours_to_show: 168
+            line_width: 2
+            decimals: 0
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: sensor.roborock_qv_35a_temps_restant_brosse_principale
+                name: Brosse principale
+              - entity: sensor.roborock_qv_35a_temps_restant_brosse_laterale
+                name: Brosse laterale
+              - entity: sensor.roborock_qv_35a_temps_restant_filtre
+                name: Filtre
+              - entity: sensor.roborock_qv_35a_temps_restant_capteurs
+                name: Capteurs
+              - entity: sensor.roborock_qv_35a_dock_strainer_time_left
+                name: Bac de nettoyage
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Statistiques
+            icon: mdi:chart-bar
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: sensor.roborock_qv_35a_nombre_total_de_nettoyages
+                name: Total nettoyages
+              - entity: sensor.roborock_qv_35a_surface_de_nettoyage_totale
+                name: Surface totale (m2)
+              - entity: sensor.roborock_qv_35a_duree_totale_de_nettoyage
+                name: Duree totale (h)
+              - entity: sensor.roborock_qv_35a_debut_du_dernier_nettoyage
+                name: Dernier nettoyage debut
+              - entity: sensor.roborock_qv_35a_fin_du_dernier_nettoyage
+                name: Dernier nettoyage fin
+              - entity: sensor.roborock_qv_35a_duree_de_nettoyage
+                name: Derniere duree (min)
+              - entity: sensor.roborock_qv_35a_surface_de_nettoyage
+                name: Derniere surface (m2)
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Reglages
+            icon: mdi:cog
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: switch.roborock_qv_35a_ne_pas_deranger
+                name: Ne pas deranger
+              - entity: time.roborock_qv_35a_ne_pas_deranger_debut
+                name: Debut
+              - entity: time.roborock_qv_35a_ne_pas_deranger_fin
+                name: Fin
+              - entity: number.roborock_qv_35a_volume
+                name: Volume
+              - entity: select.roborock_qv_35a_intensite_de_frottement
+                name: Frottement
+              - entity: select.roborock_qv_35a_parcours_de_lavage_de_sol
+                name: Parcours lavage
+              - entity: select.roborock_qv_35a_dock_mode_de_vidage
+                name: Mode vidage
+  - title: Climat
+    path: climat
+    icon: mdi:thermometer
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Vue d'ensemble
+            icon: mdi:home-thermometer
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: RDC
+                secondary: '{{ states(''sensor.0xa4c138503fcc929f_temperature'') }}C'
+                icon: mdi:home-floor-g
+                icon_color: >-
+                  {% set t = states('sensor.0xa4c138503fcc929f_temperature') |
+                  float(0) %} {% if t < 18 %}blue {% elif t < 22 %}green {% elif
+                  t < 26 %}orange {% else %}red{% endif %}
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: Etage
+                secondary: '{{ states(''sensor.captor_temperature_step_1'') }}C'
+                icon: mdi:home-floor-1
+                icon_color: >-
+                  {% set t = states('sensor.captor_temperature_step_1') |
+                  float(0) %} {% if t < 18 %}blue {% elif t < 22 %}green {% elif
+                  t < 26 %}orange {% else %}red{% endif %}
+                fill_container: true
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Chambre
+                secondary: >-
+                  {{
+                  states('sensor.capteur_de_temperature_et_d_humidite_temperature')
+                  }}C
+                icon: mdi:bed
+                icon_color: >-
+                  {% set t =
+                  states('sensor.capteur_de_temperature_et_d_humidite_temperature')
+                  | float(0) %} {% if t < 18 %}blue {% elif t < 22 %}green {%
+                  elif t < 26 %}orange {% else %}red{% endif %}
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: Jeanne
+                secondary: '{{ states(''sensor.0xa4c13821bc3bee42_temperature'') }}C'
+                icon: mdi:baby-face
+                icon_color: >-
+                  {% set t = states('sensor.0xa4c13821bc3bee42_temperature') |
+                  float(0) %} {% if t < 18 %}blue {% elif t < 22 %}green {% elif
+                  t < 26 %}orange {% else %}red{% endif %}
+                fill_container: true
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Meteo exterieure
+            icon: mdi:weather-partly-cloudy
+          - type: weather-forecast
+            entity: weather.forecast_maison
+            forecast_type: daily
+            show_current: true
+            show_forecast: true
+          - type: weather-forecast
+            entity: weather.forecast_maison
+            forecast_type: hourly
+            show_current: false
+            show_forecast: true
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Temperatures comparees (24h)
+            icon: mdi:chart-line
+          - type: custom:mini-graph-card
+            name: Temperatures
+            hours_to_show: 24
+            points_per_hour: 2
+            line_width: 3
+            font_size: 75
+            animate: true
+            show:
+              labels: true
+              extrema: true
+            entities:
+              - entity: sensor.0xa4c138503fcc929f_temperature
+                name: RDC
+                color: '#4caf50'
+              - entity: sensor.captor_temperature_step_1
+                name: Etage
+                color: '#ff9800'
+              - entity: sensor.capteur_de_temperature_et_d_humidite_temperature
+                name: Chambre
+                color: '#2196f3'
+              - entity: sensor.0xa4c13821bc3bee42_temperature
+                name: Jeanne
+                color: '#e91e63'
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Humidite comparee (24h)
+            icon: mdi:water-percent
+          - type: custom:mini-graph-card
+            name: Humidite
+            hours_to_show: 24
+            points_per_hour: 2
+            line_width: 3
+            font_size: 75
+            animate: true
+            show:
+              labels: true
+              extrema: true
+            entities:
+              - entity: sensor.0xa4c138503fcc929f_humidity
+                name: RDC
+                color: '#4caf50'
+              - entity: sensor.captor_humidity_step_1
+                name: Etage
+                color: '#ff9800'
+              - entity: sensor.capteur_de_temperature_et_d_humidite_humidite
+                name: Chambre
+                color: '#2196f3'
+              - entity: sensor.0xa4c13821bc3bee42_humidity
+                name: Jeanne
+                color: '#e91e63'
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: RDC - Detail
+            icon: mdi:home-floor-g
+          - type: custom:mini-graph-card
+            name: RDC Temperature
+            entities:
+              - entity: sensor.0xa4c138503fcc929f_temperature
+                name: Temperature
+            hours_to_show: 48
+            points_per_hour: 2
+            line_width: 3
+            line_color: '#4caf50'
+            font_size: 75
+            show:
+              labels: true
+              extrema: true
+              average: true
+          - type: custom:mini-graph-card
+            name: RDC Humidite
+            entities:
+              - entity: sensor.0xa4c138503fcc929f_humidity
+                name: Humidite
+            hours_to_show: 48
+            points_per_hour: 2
+            line_width: 3
+            line_color: '#03a9f4'
+            font_size: 75
+            show:
+              labels: true
+              extrema: true
+              average: true
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Etage - Detail
+            icon: mdi:home-floor-1
+          - type: custom:mini-graph-card
+            name: Etage Temperature
+            entities:
+              - entity: sensor.captor_temperature_step_1
+                name: Temperature
+            hours_to_show: 48
+            points_per_hour: 2
+            line_width: 3
+            line_color: '#ff9800'
+            font_size: 75
+            show:
+              labels: true
+              extrema: true
+              average: true
+          - type: custom:mini-graph-card
+            name: Etage Humidite
+            entities:
+              - entity: sensor.captor_humidity_step_1
+                name: Humidite
+            hours_to_show: 48
+            points_per_hour: 2
+            line_width: 3
+            line_color: '#03a9f4'
+            font_size: 75
+            show:
+              labels: true
+              extrema: true
+              average: true
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Chambre parents - Detail
+            icon: mdi:bed
+          - type: custom:mini-graph-card
+            name: Chambre Temperature
+            entities:
+              - entity: sensor.capteur_de_temperature_et_d_humidite_temperature
+                name: Temperature
+            hours_to_show: 48
+            points_per_hour: 2
+            line_width: 3
+            line_color: '#2196f3'
+            font_size: 75
+            show:
+              labels: true
+              extrema: true
+              average: true
+          - type: custom:mini-graph-card
+            name: Chambre Humidite
+            entities:
+              - entity: sensor.capteur_de_temperature_et_d_humidite_humidite
+                name: Humidite
+            hours_to_show: 48
+            points_per_hour: 2
+            line_width: 3
+            line_color: '#03a9f4'
+            font_size: 75
+            show:
+              labels: true
+              extrema: true
+              average: true
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Chambre Jeanne - Detail
+            icon: mdi:baby-face
+          - type: custom:mini-graph-card
+            name: Jeanne Temperature
+            entities:
+              - entity: sensor.0xa4c13821bc3bee42_temperature
+                name: Temperature
+            hours_to_show: 48
+            points_per_hour: 2
+            line_width: 3
+            line_color: '#e91e63'
+            font_size: 75
+            show:
+              labels: true
+              extrema: true
+              average: true
+          - type: custom:mini-graph-card
+            name: Jeanne Humidite
+            entities:
+              - entity: sensor.0xa4c13821bc3bee42_humidity
+                name: Humidite
+            hours_to_show: 48
+            points_per_hour: 2
+            line_width: 3
+            line_color: '#03a9f4'
+            font_size: 75
+            show:
+              labels: true
+              extrema: true
+              average: true
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Tendance 7 jours
+            icon: mdi:calendar-week
+          - type: custom:mini-graph-card
+            name: Temperatures 7 jours
+            hours_to_show: 168
+            points_per_hour: 0.5
+            line_width: 2
+            font_size: 75
+            aggregate_func: avg
+            group_by: hour
+            show:
+              labels: true
+            entities:
+              - entity: sensor.0xa4c138503fcc929f_temperature
+                name: RDC
+                color: '#4caf50'
+              - entity: sensor.captor_temperature_step_1
+                name: Etage
+                color: '#ff9800'
+              - entity: sensor.capteur_de_temperature_et_d_humidite_temperature
+                name: Chambre
+                color: '#2196f3'
+              - entity: sensor.0xa4c13821bc3bee42_temperature
+                name: Jeanne
+                color: '#e91e63'
+  - title: Systeme
+    path: systeme
+    icon: mdi:cog
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Box internet
+            icon: mdi:router-wireless
+          - type: custom:mushroom-template-card
+            primary: Connexion WAN
+            secondary: >-
+              {% if
+              is_state('binary_sensor.neufbox_router_etat_du_reseau_etendu_wan',
+              'on') %}En ligne {% else %}Hors ligne{% endif %}
+            icon: mdi:web
+            icon_color: >-
+              {% if
+              is_state('binary_sensor.neufbox_router_etat_du_reseau_etendu_wan',
+              'on') %}green {% else %}red{% endif %}
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Download
+                secondary: >-
+                  {{ states('sensor.neufbox_router_vitesse_de_telechargement') |
+                  float(0) | round(1) }} Mbps
+                icon: mdi:download
+                icon_color: blue
+              - type: custom:mushroom-template-card
+                primary: Upload
+                secondary: >-
+                  {{
+                  states('sensor.neufbox_router_vitesse_de_telechargement_montant')
+                  | float(0) | round(1) }} Mbps
+                icon: mdi:upload
+                icon_color: orange
+          - type: custom:mushroom-template-card
+            primary: IP externe
+            secondary: '{{ states(''sensor.neufbox_router_ip_externe'') }}'
+            icon: mdi:ip-network
+          - type: custom:mini-graph-card
+            name: Debit internet 24h
+            hours_to_show: 24
+            points_per_hour: 4
+            line_width: 2
+            entities:
+              - entity: sensor.neufbox_router_vitesse_de_telechargement
+                name: Download
+              - entity: sensor.neufbox_router_vitesse_de_telechargement_montant
+                name: Upload
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Sauvegardes
+            icon: mdi:backup-restore
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: sensor.backup_backup_manager_state
+                name: Etat
+              - entity: sensor.backup_last_successful_automatic_backup
+                name: Derniere reussie
+              - entity: sensor.backup_next_scheduled_automatic_backup
+                name: Prochaine programmee
+              - entity: binary_sensor.backups_stale
+                name: Sauvegarde obsolete
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Liste de courses
+            icon: mdi:cart
+          - type: todo-list
+            entity: todo.liste_dachats
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Batteries
+            icon: mdi:battery-alert
+          - type: entities
+            title: Batteries faibles (alertes)
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.0xa4c138b35ca17149_battery_low
+                name: Porte d'entree
+              - entity: binary_sensor.0xa4c138b788944b2b_battery_low
+                name: Fenetre cuisine gauche
+              - entity: binary_sensor.0xa4c138664b1bac82_battery_low
+                name: Fenetre cuisine droite
+              - entity: binary_sensor.0xa4c13893a6f5b9b7_battery_low
+                name: Fenetre salon
+              - entity: binary_sensor.0xa4c1387e3f595605_battery_low
+                name: Fenetre bureau
+              - entity: binary_sensor.0xa4c13828f794482c_battery_low
+                name: Baie vitree droite
+              - entity: binary_sensor.0xa4c138ef24f410e9_battery_low
+                name: Baie vitree gauche
+              - entity: binary_sensor.0xa4c1388740e7ca6c_battery_low
+                name: Porte SDB
+              - entity: binary_sensor.0xa4c138e4a8e7b49f_battery_low
+                name: Porte chambre
+              - entity: binary_sensor.0x0015bc0043005cf2_battery_low
+                name: Clavier Frient
+              - entity: binary_sensor.0xa4c138569da5ec12_battery_low
+                name: Alarme
+          - type: entities
+            title: Tensions piles (mV)
+            show_header_toggle: false
+            entities:
+              - entity: sensor.0xa4c138b35ca17149_voltage
+                name: Porte d'entree
+              - entity: sensor.0xa4c138b788944b2b_voltage
+                name: Fenetre cuisine gauche
+              - entity: sensor.0xa4c138664b1bac82_voltage
+                name: Fenetre cuisine droite
+              - entity: sensor.0xa4c13893a6f5b9b7_voltage
+                name: Fenetre salon
+              - entity: sensor.0xa4c1387e3f595605_voltage
+                name: Fenetre bureau
+              - entity: sensor.0xa4c13828f794482c_voltage
+                name: Baie vitree droite
+              - entity: sensor.0xa4c138ef24f410e9_voltage
+                name: Baie vitree gauche
+              - entity: sensor.0xa4c1388740e7ca6c_voltage
+                name: Salle de bain
+              - entity: sensor.0xa4c138e4a8e7b49f_voltage
+                name: Chambre
+              - entity: sensor.0xa4c138503fcc929f_voltage
+                name: Thermometre RDC
+              - entity: sensor.0xa4c13821bc3bee42_voltage
+                name: Thermometre Jeanne
+              - entity: sensor.0x0015bc0043005cf2_voltage
+                name: Clavier Frient
+      - type: grid
+        cards:
+          - type: custom:bubble-card
+            card_type: separator
+            name: Mises a jour
+            icon: mdi:update
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: update.home_assistant_core_update
+              - entity: update.home_assistant_supervisor_update
+              - entity: update.home_assistant_operating_system_update
+              - entity: update.zigbee2mqtt_mise_a_jour
+              - entity: update.mosquitto_broker_mise_a_jour
+              - entity: update.matter_server_mise_a_jour
+              - entity: update.terminal_ssh_mise_a_jour
+              - entity: update.home_assistant_matter_hub_mise_a_jour
+              - entity: update.home_assistant_google_drive_backup_mise_a_jour
+              - entity: update.hacs_update
+              - entity: update.mushroom_update
+              - entity: update.alarmo_update
+              - entity: update.button_card_update
+              - entity: update.tapo_controller_update
+              - entity: update.tapo_cameras_control_update
+              - entity: update.browser_mod_update
+              - entity: update.mini_graph_card_update
+              - entity: update.cover_position_card_update
+              - entity: update.mushroom_dashboard_strategy_update
+              - entity: update.person_details_card_update
+              - entity: update.blueprint_studio_update
