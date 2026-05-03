@@ -632,9 +632,22 @@ views:
             double_tap_action:
               action: more-info
           - type: custom:bubble-card
-            card_type: cover
-            entity: cover.volet_salon_2
+            card_type: button
+            button_type: state
+            entity: input_number.position_volet_salon
             name: Volet Salon
+            icon: mdi:window-shutter
+            show_state: false
+            tap_action:
+              action: navigate
+              navigation_path: '#volet-salon'
+            sub_button:
+              - name_template: >-
+                  {% set p = states('input_number.position_volet_salon') | int(0)
+                  %} {% if p == 0 %}Ferme {% elif p == 100 %}Ouvert {% else %}{{ p
+                  }}%{% endif %}
+                show_name: true
+                show_background: false
           - type: custom:mushroom-template-card
             primary: RDC
             secondary: >-
@@ -659,9 +672,22 @@ views:
             tap_action:
               action: toggle
           - type: custom:bubble-card
-            card_type: cover
-            entity: cover.volet_cuisine_3
+            card_type: button
+            button_type: state
+            entity: input_number.position_volet_cuisine
             name: Volet Cuisine
+            icon: mdi:window-shutter
+            show_state: false
+            tap_action:
+              action: navigate
+              navigation_path: '#volet-cuisine'
+            sub_button:
+              - name_template: >-
+                  {% set p = states('input_number.position_volet_cuisine') |
+                  int(0) %} {% if p == 0 %}Ferme {% elif p == 100 %}Ouvert {%
+                  else %}{{ p }}%{% endif %}
+                show_name: true
+                show_background: false
       - type: grid
         cards:
           - type: custom:bubble-card
@@ -1004,10 +1030,15 @@ views:
             card_type: separator
             name: Volet Salon
             icon: mdi:window-shutter
-          - type: custom:bubble-card
-            card_type: cover
-            entity: cover.volet_salon_2
-            name: Volet Salon
+          - type: custom:mushroom-template-card
+            primary: Position estimee
+            secondary: >-
+              {% set p = states('input_number.position_volet_salon') | int(0) %}
+              {% if p == 0 %}Ferme {% elif p == 100 %}Ouvert {% else %}{{ p }}%{% endif %}
+            icon: mdi:window-shutter
+            icon_color: >-
+              {% set p = states('input_number.position_volet_salon') | int(0) %}
+              {% if p == 0 %}grey {% elif p == 100 %}green {% else %}blue{% endif %}
           - type: horizontal-stack
             cards:
               - type: custom:mushroom-entity-card
@@ -1047,10 +1078,15 @@ views:
             card_type: separator
             name: Volet Cuisine
             icon: mdi:window-shutter
-          - type: custom:bubble-card
-            card_type: cover
-            entity: cover.volet_cuisine_3
-            name: Volet Cuisine
+          - type: custom:mushroom-template-card
+            primary: Position estimee
+            secondary: >-
+              {% set p = states('input_number.position_volet_cuisine') | int(0) %}
+              {% if p == 0 %}Ferme {% elif p == 100 %}Ouvert {% else %}{{ p }}%{% endif %}
+            icon: mdi:window-shutter
+            icon_color: >-
+              {% set p = states('input_number.position_volet_cuisine') | int(0) %}
+              {% if p == 0 %}grey {% elif p == 100 %}green {% else %}blue{% endif %}
           - type: horizontal-stack
             cards:
               - type: custom:mushroom-entity-card
