@@ -8,6 +8,220 @@ views:
       - type: grid
         cards:
           - type: custom:bubble-card
+            card_type: pop-up
+            hash: '#volet-salon'
+            name: Volet Salon
+            icon: mdi:window-shutter
+            entity: cover.volet_salon_2
+            show_header: true
+            close_on_click: false
+            auto_close: 60000
+            margin_top_mobile: '-56px'
+            margin_top_desktop: 0px
+            sub_button:
+              - icon: mdi:arrow-up-bold
+                tap_action:
+                  action: call-service
+                  service: input_number.set_value
+                  service_data:
+                    entity_id: input_number.position_cible_volet_salon
+                    value: 100
+                show_background: true
+              - icon: mdi:pause
+                tap_action:
+                  action: call-service
+                  service: input_button.press
+                  service_data:
+                    entity_id: input_button.stop_cover_salon_button
+                show_background: true
+              - icon: mdi:arrow-down-bold
+                tap_action:
+                  action: call-service
+                  service: input_number.set_value
+                  service_data:
+                    entity_id: input_number.position_cible_volet_salon
+                    value: 0
+                show_background: true
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Position estimee
+                    secondary: >-
+                      {{ states('input_number.position_volet_salon') | int }}%
+                      (0=ferme, 100=ouvert)
+                    icon: mdi:format-vertical-align-center
+                    icon_color: blue
+                    fill_container: true
+                  - type: entities
+                    entities:
+                      - entity: input_number.position_cible_volet_salon
+                        name: Position cible
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: 0%
+                        secondary: Ferme
+                        icon: mdi:window-shutter
+                        icon_color: grey
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_salon
+                            value: 0
+                      - type: custom:mushroom-template-card
+                        primary: 25%
+                        icon: mdi:window-shutter
+                        icon_color: blue-grey
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_salon
+                            value: 25
+                      - type: custom:mushroom-template-card
+                        primary: 50%
+                        icon: mdi:window-shutter-open
+                        icon_color: blue
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_salon
+                            value: 50
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: 75%
+                        icon: mdi:window-shutter-open
+                        icon_color: orange
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_salon
+                            value: 75
+                      - type: custom:mushroom-template-card
+                        primary: 100%
+                        secondary: Ouvert
+                        icon: mdi:window-shutter-open
+                        icon_color: green
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_salon
+                            value: 100
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: '#volet-cuisine'
+            name: Volet Cuisine
+            icon: mdi:window-shutter
+            entity: cover.volet_cuisine_3
+            show_header: true
+            close_on_click: false
+            auto_close: 60000
+            margin_top_mobile: '-56px'
+            margin_top_desktop: 0px
+            sub_button:
+              - icon: mdi:arrow-up-bold
+                tap_action:
+                  action: call-service
+                  service: input_number.set_value
+                  service_data:
+                    entity_id: input_number.position_cible_volet_cuisine
+                    value: 100
+                show_background: true
+              - icon: mdi:pause
+                tap_action:
+                  action: call-service
+                  service: input_button.press
+                  service_data:
+                    entity_id: input_button.stop_cover_button
+                show_background: true
+              - icon: mdi:arrow-down-bold
+                tap_action:
+                  action: call-service
+                  service: input_number.set_value
+                  service_data:
+                    entity_id: input_number.position_cible_volet_cuisine
+                    value: 0
+                show_background: true
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Position estimee
+                    secondary: >-
+                      {{ states('input_number.position_volet_cuisine') | int }}%
+                      (0=ferme, 100=ouvert)
+                    icon: mdi:format-vertical-align-center
+                    icon_color: blue
+                    fill_container: true
+                  - type: entities
+                    entities:
+                      - entity: input_number.position_cible_volet_cuisine
+                        name: Position cible
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: 0%
+                        secondary: Ferme
+                        icon: mdi:window-shutter
+                        icon_color: grey
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_cuisine
+                            value: 0
+                      - type: custom:mushroom-template-card
+                        primary: 25%
+                        icon: mdi:window-shutter
+                        icon_color: blue-grey
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_cuisine
+                            value: 25
+                      - type: custom:mushroom-template-card
+                        primary: 50%
+                        icon: mdi:window-shutter-open
+                        icon_color: blue
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_cuisine
+                            value: 50
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mushroom-template-card
+                        primary: 75%
+                        icon: mdi:window-shutter-open
+                        icon_color: orange
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_cuisine
+                            value: 75
+                      - type: custom:mushroom-template-card
+                        primary: 100%
+                        secondary: Ouvert
+                        icon: mdi:window-shutter-open
+                        icon_color: green
+                        tap_action:
+                          action: call-service
+                          service: input_number.set_value
+                          service_data:
+                            entity_id: input_number.position_cible_volet_cuisine
+                            value: 100
+      - type: grid
+        cards:
+          - type: custom:bubble-card
             card_type: separator
             name: La maison
             icon: mdi:home-heart
@@ -336,220 +550,6 @@ views:
                       %}{{ inv }}%{% endif %}
                     show_name: true
                     show_background: false
-      - type: grid
-        cards:
-          - type: custom:bubble-card
-            card_type: pop-up
-            hash: '#volet-salon'
-            name: Volet Salon
-            icon: mdi:window-shutter
-            entity: cover.volet_salon_2
-            show_header: true
-            close_on_click: false
-            auto_close: 60000
-            margin_top_mobile: '-56px'
-            margin_top_desktop: 0px
-            sub_button:
-              - icon: mdi:arrow-up-bold
-                tap_action:
-                  action: call-service
-                  service: input_number.set_value
-                  service_data:
-                    entity_id: input_number.position_cible_volet_salon
-                    value: 100
-                show_background: true
-              - icon: mdi:pause
-                tap_action:
-                  action: call-service
-                  service: input_button.press
-                  service_data:
-                    entity_id: input_button.stop_cover_salon_button
-                show_background: true
-              - icon: mdi:arrow-down-bold
-                tap_action:
-                  action: call-service
-                  service: input_number.set_value
-                  service_data:
-                    entity_id: input_number.position_cible_volet_salon
-                    value: 0
-                show_background: true
-            cards:
-              - type: vertical-stack
-                cards:
-                  - type: custom:mushroom-template-card
-                    primary: Position estimee
-                    secondary: >-
-                      {{ states('input_number.position_volet_salon') | int }}%
-                      (0=ferme, 100=ouvert)
-                    icon: mdi:format-vertical-align-center
-                    icon_color: blue
-                    fill_container: true
-                  - type: entities
-                    entities:
-                      - entity: input_number.position_cible_volet_salon
-                        name: Position cible
-                  - type: horizontal-stack
-                    cards:
-                      - type: custom:mushroom-template-card
-                        primary: 0%
-                        secondary: Ferme
-                        icon: mdi:window-shutter
-                        icon_color: grey
-                        tap_action:
-                          action: call-service
-                          service: input_number.set_value
-                          service_data:
-                            entity_id: input_number.position_cible_volet_salon
-                            value: 0
-                      - type: custom:mushroom-template-card
-                        primary: 25%
-                        icon: mdi:window-shutter
-                        icon_color: blue-grey
-                        tap_action:
-                          action: call-service
-                          service: input_number.set_value
-                          service_data:
-                            entity_id: input_number.position_cible_volet_salon
-                            value: 25
-                      - type: custom:mushroom-template-card
-                        primary: 50%
-                        icon: mdi:window-shutter-open
-                        icon_color: blue
-                        tap_action:
-                          action: call-service
-                          service: input_number.set_value
-                          service_data:
-                            entity_id: input_number.position_cible_volet_salon
-                            value: 50
-                  - type: horizontal-stack
-                    cards:
-                      - type: custom:mushroom-template-card
-                        primary: 75%
-                        icon: mdi:window-shutter-open
-                        icon_color: orange
-                        tap_action:
-                          action: call-service
-                          service: input_number.set_value
-                          service_data:
-                            entity_id: input_number.position_cible_volet_salon
-                            value: 75
-                      - type: custom:mushroom-template-card
-                        primary: 100%
-                        secondary: Ouvert
-                        icon: mdi:window-shutter-open
-                        icon_color: green
-                        tap_action:
-                          action: call-service
-                          service: input_number.set_value
-                          service_data:
-                            entity_id: input_number.position_cible_volet_salon
-                            value: 100
-          - type: custom:bubble-card
-            card_type: pop-up
-            hash: '#volet-cuisine'
-            name: Volet Cuisine
-            icon: mdi:window-shutter
-            entity: cover.volet_cuisine_3
-            show_header: true
-            close_on_click: false
-            auto_close: 60000
-            margin_top_mobile: '-56px'
-            margin_top_desktop: 0px
-            sub_button:
-              - icon: mdi:arrow-up-bold
-                tap_action:
-                  action: call-service
-                  service: input_number.set_value
-                  service_data:
-                    entity_id: input_number.position_cible_volet_cuisine
-                    value: 100
-                show_background: true
-              - icon: mdi:pause
-                tap_action:
-                  action: call-service
-                  service: input_button.press
-                  service_data:
-                    entity_id: input_button.stop_cover_button
-                show_background: true
-              - icon: mdi:arrow-down-bold
-                tap_action:
-                  action: call-service
-                  service: input_number.set_value
-                  service_data:
-                    entity_id: input_number.position_cible_volet_cuisine
-                    value: 0
-                show_background: true
-            cards:
-              - type: vertical-stack
-                cards:
-                  - type: custom:mushroom-template-card
-                    primary: Position estimee
-                    secondary: >-
-                      {{ states('input_number.position_volet_cuisine') | int }}%
-                      (0=ferme, 100=ouvert)
-                    icon: mdi:format-vertical-align-center
-                    icon_color: blue
-                    fill_container: true
-                  - type: entities
-                    entities:
-                      - entity: input_number.position_cible_volet_cuisine
-                        name: Position cible
-                  - type: horizontal-stack
-                    cards:
-                      - type: custom:mushroom-template-card
-                        primary: 0%
-                        secondary: Ferme
-                        icon: mdi:window-shutter
-                        icon_color: grey
-                        tap_action:
-                          action: call-service
-                          service: input_number.set_value
-                          service_data:
-                            entity_id: input_number.position_cible_volet_cuisine
-                            value: 0
-                      - type: custom:mushroom-template-card
-                        primary: 25%
-                        icon: mdi:window-shutter
-                        icon_color: blue-grey
-                        tap_action:
-                          action: call-service
-                          service: input_number.set_value
-                          service_data:
-                            entity_id: input_number.position_cible_volet_cuisine
-                            value: 25
-                      - type: custom:mushroom-template-card
-                        primary: 50%
-                        icon: mdi:window-shutter-open
-                        icon_color: blue
-                        tap_action:
-                          action: call-service
-                          service: input_number.set_value
-                          service_data:
-                            entity_id: input_number.position_cible_volet_cuisine
-                            value: 50
-                  - type: horizontal-stack
-                    cards:
-                      - type: custom:mushroom-template-card
-                        primary: 75%
-                        icon: mdi:window-shutter-open
-                        icon_color: orange
-                        tap_action:
-                          action: call-service
-                          service: input_number.set_value
-                          service_data:
-                            entity_id: input_number.position_cible_volet_cuisine
-                            value: 75
-                      - type: custom:mushroom-template-card
-                        primary: 100%
-                        secondary: Ouvert
-                        icon: mdi:window-shutter-open
-                        icon_color: green
-                        tap_action:
-                          action: call-service
-                          service: input_number.set_value
-                          service_data:
-                            entity_id: input_number.position_cible_volet_cuisine
-                            value: 100
       - type: grid
         cards:
           - type: custom:bubble-card
