@@ -20,25 +20,25 @@
 - cover:
     - name: Volet Cuisine
       unique_id: volet_cuisine_alexa
-      position: "{{ 100 - states('input_number.position_volet_cuisine') | int(0) }}"
+      position: "{{ states('input_number.position_volet_cuisine') | int(0) }}"
       set_cover_position:
         - action: input_number.set_value
           target:
             entity_id: input_number.position_cible_volet_cuisine
           data:
-            value: "{{ 100 - position }}"
+            value: "{{ position }}"
       open_cover:
         - action: input_number.set_value
           target:
             entity_id: input_number.position_cible_volet_cuisine
           data:
-            value: 0
+            value: 100
       close_cover:
         - action: input_number.set_value
           target:
             entity_id: input_number.position_cible_volet_cuisine
           data:
-            value: 100
+            value: 0
       stop_cover:
         - action: input_button.press
           target:
@@ -46,25 +46,25 @@
 
     - name: Volet Salon
       unique_id: volet_salon_alexa
-      position: "{{ 100 - states('input_number.position_volet_salon') | int(0) }}"
+      position: "{{ states('input_number.position_volet_salon') | int(0) }}"
       set_cover_position:
         - action: input_number.set_value
           target:
             entity_id: input_number.position_cible_volet_salon
           data:
-            value: "{{ 100 - position }}"
+            value: "{{ position }}"
       open_cover:
         - action: input_number.set_value
           target:
             entity_id: input_number.position_cible_volet_salon
           data:
-            value: 0
+            value: 100
       close_cover:
         - action: input_number.set_value
           target:
             entity_id: input_number.position_cible_volet_salon
           data:
-            value: 100
+            value: 0
       stop_cover:
         - action: input_button.press
           target:
